@@ -27,7 +27,7 @@ export default function DownloaderApp() {
     setProcessedVideo(null);
     
     try {
-        const response = await fetch('http://127.0.0.1:8000/api/extract', {
+        const response = await fetch('https://buffradar-backend.onrender.com', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: inputLinks })
