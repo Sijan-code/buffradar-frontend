@@ -33,6 +33,24 @@ const AUDIO_QUALITIES = [
   { id: '48kbps', short: '48k', label: '48kbps (lowest)' },
 ];
 
+// 🔄 কনভার্টারের ফরম্যাট লিস্ট (kind: video | gif | audio, lossless হলে bitrate লাগে না)
+const CONVERT_FORMATS = [
+  { id: 'mp4', label: 'MP4', note: 'Universal', kind: 'video' },
+  { id: 'webm', label: 'WEBM', note: 'Web', kind: 'video' },
+  { id: 'mkv', label: 'MKV', note: 'Flexible', kind: 'video' },
+  { id: 'mov', label: 'MOV', note: 'Apple', kind: 'video' },
+  { id: 'avi', label: 'AVI', note: 'Legacy', kind: 'video' },
+  { id: 'gif', label: 'GIF', note: '30s max', kind: 'gif' },
+  { id: 'mp3', label: 'MP3', note: 'Universal', kind: 'audio' },
+  { id: 'm4a', label: 'M4A', note: 'AAC', kind: 'audio' },
+  { id: 'ogg', label: 'OGG', note: 'Vorbis', kind: 'audio' },
+  { id: 'wav', label: 'WAV', note: 'Lossless', kind: 'audio', lossless: true },
+  { id: 'flac', label: 'FLAC', note: 'Lossless', kind: 'audio', lossless: true },
+];
+
+// কনভার্টারে সর্বোচ্চ ১০৮০p (সার্ভারের লিমিটের সাথে মিল রেখে)
+const CONVERT_VIDEO_QUALITIES = VIDEO_QUALITIES.filter((q) => parseInt(q.id, 10) <= 1080);
+
 const formatDuration = (sec) => {
   const total = Math.round(Number(sec));
   if (!total || total <= 0) return 'Auto';
@@ -56,6 +74,9 @@ export default function DownloaderApp() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [convertFormat, setConvertFormat] = useState('mp4');
+  const [convertQuality, setConvertQuality] = useState('1080p');
+  const [convertBitrate, setConvertBitrate] = useState('192kbps');
 
   useEffect(() => {
   setIsClient(true);
@@ -64,6 +85,12 @@ export default function DownloaderApp() {
     if (!session) {
       const { error } = await supabase.auth.signInAnonymously();
       if (error) console.error('Anonymous sign-in failed:', error.message);
+    } else {
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Session refresh failed, re-signing in:', refreshError.message);
+        await supabase.auth.signInAnonymously();
+      }
     }
   })();
 }, []);
@@ -71,6 +98,11 @@ export default function DownloaderApp() {
   const fetchHistory = async () => {
   setShowHistoryModal(true);
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const { error: signInErr } = await supabase.auth.signInAnonymously();
+      if (signInErr) { console.error(signInErr.message); return; }
+    }
     const { data, error } = await supabase
       .from('download_history')
       .select('*')
@@ -85,6 +117,27 @@ export default function DownloaderApp() {
     console.error("Error fetching history:", err);
   }
 };
+
+const handleDeleteHistory = async (id) => {
+  try {
+    const { error } = await supabase
+      .from('download_history')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error("Delete error:", error.message);
+      alert("ডিলিট করা যায়নি: " + error.message);
+      return;
+    }
+    // লোকাল state থেকেও সাথে সাথে সরিয়ে দেওয়া হচ্ছে
+    setHistoryData((prev) => prev.filter((item) => item.id !== id));
+  } catch (err) {
+    console.error("Error deleting history:", err);
+  }
+};
+
+
 
   const handleFetchLinks = async () => {
     if (!inputLinks.trim()) {
@@ -214,6 +267,69 @@ export default function DownloaderApp() {
       console.error("Proxy download failed:", error);
       window.open(downloadUrl, '_blank');
       setDownloadProgress(null);
+    }
+  };
+
+  // 🔄 কনভার্ট: সার্ভারে নামিয়ে ffmpeg দিয়ে বদলে তারপর ফাইল পাঠায় — তাই সময় লাগে
+  const triggerConvert = async (sourceUrl, videoTitle) => {
+    if (!sourceUrl) {
+      alert("কনভার্ট করার লিঙ্ক পাওয়া যায়নি!");
+      return;
+    }
+    const fmt = CONVERT_FORMATS.find((f) => f.id === convertFormat) || CONVERT_FORMATS[0];
+    let progressInterval;
+    try {
+      setMenuOpen(false);
+      setDownloadProgress(0);
+
+      const params = new URLSearchParams({
+        url: sourceUrl,
+        fmt: fmt.id,
+        quality: convertQuality,
+        bitrate: convertBitrate,
+      });
+
+      // কনভার্ট শেষ হওয়ার আগে ১০০% দেখানো ঠিক না, তাই ধীরে ধীরে সর্বোচ্চ ৯৫% পর্যন্ত এগোবে
+      progressInterval = setInterval(() => {
+        setDownloadProgress((prev) => {
+          if (prev === null || prev >= 95) return prev;
+          return Math.min(95, prev + Math.max(1, Math.round((95 - prev) * 0.05)));
+        });
+      }, 500);
+
+      const response = await fetch(`${API_BASE}/api/convert?${params.toString()}`);
+      if (!response.ok) {
+        let msg = "কনভার্ট করা যায়নি। আবার চেষ্টা করুন।";
+        try {
+          const err = await response.json();
+          if (err && err.detail) msg = err.detail;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const blob = await response.blob();
+
+      clearInterval(progressInterval);
+      setDownloadProgress(100);
+
+      const safeTitle = (videoTitle || "media").replace(/[\\/:*?"<>|]+/g, "").trim().substring(0, 40) || "media";
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${safeTitle}.${fmt.id}`;
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setDownloadProgress(null);
+      }, 1000);
+    } catch (error) {
+      console.error("Convert failed:", error);
+      clearInterval(progressInterval);
+      setDownloadProgress(null);
+      alert(error.message || "কনভার্ট করা যায়নি।");
     }
   };
 
@@ -418,13 +534,13 @@ export default function DownloaderApp() {
             </button>
           </div>
 
-          <div className="flex gap-1.5 mt-3 border-t border-slate-800/60 pt-3">
-            {['video', 'audio', 'deep insight', 'creator'].map((tab) => (
+          <div className="flex gap-1.5 mt-3 border-t border-slate-800/60 pt-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {['video', 'audio', 'convert', 'deep insight', 'creator'].map((tab) => (
               <button
                 key={tab}
                 disabled={!processedVideo}
                 onClick={() => setActiveTab(tab)}
-                className={`text-[10px] uppercase font-bold py-2 rounded-lg border flex-1 text-center ${
+                className={`text-[10px] uppercase font-bold py-2 px-2 rounded-lg border flex-1 text-center whitespace-nowrap ${
                   !processedVideo 
                     ? 'opacity-30 border-slate-800 text-slate-600'
                     : activeTab === tab
@@ -551,6 +667,131 @@ export default function DownloaderApp() {
 
               </div>
             )}
+
+            {/* TAB 3: CONVERT PANEL */}
+            {activeTab === 'convert' && (() => {
+              const fmt = CONVERT_FORMATS.find((f) => f.id === convertFormat) || CONVERT_FORMATS[0];
+              const videoFormats = CONVERT_FORMATS.filter((f) => f.kind !== 'audio');
+              const audioFormats = CONVERT_FORMATS.filter((f) => f.kind === 'audio');
+              const convQ = CONVERT_VIDEO_QUALITIES.find((q) => q.id === convertQuality) || CONVERT_VIDEO_QUALITIES[0];
+              const detail =
+                fmt.kind === 'video' ? convQ.short
+                : fmt.kind === 'gif' ? '480p · 30s max'
+                : fmt.lossless ? 'Lossless'
+                : convertBitrate;
+
+              const FormatChip = ({ f }) => {
+                const on = f.id === convertFormat;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setConvertFormat(f.id)}
+                    className={`flex-shrink-0 min-w-[68px] px-3 py-2 rounded-xl border text-center transition-all active:scale-95 ${
+                      on
+                        ? 'bg-violet-500 text-slate-950 border-violet-400 shadow-md shadow-violet-500/20'
+                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600'
+                    }`}
+                  >
+                    <span className="block text-[11px] font-black tracking-wide">{f.label}</span>
+                    <span className={`block text-[8px] font-mono mt-0.5 ${on ? 'text-slate-900/70' : 'text-slate-500'}`}>{f.note}</span>
+                  </button>
+                );
+              };
+
+              return (
+                <div className="space-y-5 text-xs animate-fadeIn">
+
+                  {/* কনভার্টার প্রিভিউ কার্ড */}
+                  <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/80 p-2.5 flex gap-3 items-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl border border-violet-500/20 shadow-lg shadow-violet-500/5">
+                      🔄
+                    </div>
+                    <div className="truncate flex-1">
+                      <p className="text-violet-400 font-bold uppercase text-[9px] tracking-wider">Format Converter</p>
+                      <p className="text-white font-bold truncate mt-0.5" title={processedVideo.title}>{processedVideo.title}</p>
+                      <p className="text-slate-400 font-mono text-[10px] mt-0.5">
+                        Output: <span className="text-violet-400 font-bold">.{fmt.label}</span> | Quality: <span className="text-slate-200 font-bold">{detail}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ফরম্যাট বাটন — এক লাইনে, সোয়াইপ করে বাকিগুলো দেখা যাবে */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Video Formats:
+                    </label>
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {videoFormats.map((f) => <FormatChip key={f.id} f={f} />)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Audio Formats:
+                    </label>
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {audioFormats.map((f) => <FormatChip key={f.id} f={f} />)}
+                    </div>
+                  </div>
+
+                  {/* কোয়ালিটি: ভিডিও হলে রেজোলিউশন, লসি অডিও হলে bitrate, নাহলে ছোট নোট */}
+                  {fmt.kind === 'video' && (
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Max Resolution:
+                      </label>
+                      <QualitySelector
+                        items={CONVERT_VIDEO_QUALITIES}
+                        value={convertQuality}
+                        onChange={setConvertQuality}
+                        theme="blue"
+                        label="Convert resolution"
+                      />
+                    </div>
+                  )}
+
+                  {fmt.kind === 'audio' && !fmt.lossless && (
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Audio Bitrate:
+                      </label>
+                      <QualitySelector
+                        items={AUDIO_QUALITIES}
+                        value={convertBitrate}
+                        onChange={setConvertBitrate}
+                        theme="emerald"
+                        label="Convert bitrate"
+                      />
+                    </div>
+                  )}
+
+                  {(fmt.kind === 'gif' || fmt.lossless) && (
+                    <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[10px] text-slate-400 leading-relaxed">
+                      {fmt.kind === 'gif'
+                        ? 'GIF-এ প্রথম ৩০ সেকেন্ড, ৪৮০px চওড়া আর ১২ fps-এ কনভার্ট হবে (ফাইল ছোট রাখতে)। GIF-এ সাউন্ড থাকে না।'
+                        : 'Lossless ফরম্যাটে bitrate বাছাই করতে হয় না। ফাইলের সাইজ MP3-এর চেয়ে অনেক বড় হবে।'}
+                    </div>
+                  )}
+
+                  {/* চূড়ান্ত কনভার্ট বাটন */}
+                  <button
+                    onClick={() => triggerConvert(processedVideo.sourceUrl || processedVideo.hdLink, processedVideo.title)}
+                    disabled={downloadProgress !== null}
+                    className="w-full bg-violet-500 hover:bg-violet-400 disabled:bg-violet-800 disabled:text-slate-400 text-slate-950 text-xs font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-violet-500/20"
+                  >
+                    {downloadProgress !== null
+                      ? `⏳ Converting to ${fmt.label} ${downloadProgress}%...`
+                      : `🔄 Convert to ${fmt.label} & Download`}
+                  </button>
+
+                  <p className="text-[10px] text-slate-500 text-center leading-relaxed">
+                    কনভার্ট হতে কয়েক মিনিট লাগতে পারে — ট্যাব খোলা রাখুন। সর্বোচ্চ ১৫ মিনিটের ভিডিও, ১০৮০p পর্যন্ত।
+                  </p>
+                </div>
+              );
+            })()}
 
             {activeTab === 'deep insight' && (() => {
               // কপিরাইট স্ট্যাটাস অনুযায়ী green/red badge ঠিক করা হচ্ছে
@@ -699,10 +940,18 @@ export default function DownloaderApp() {
         ) : (
           historyData.map((item) => (
   <div key={item.id || Math.random()} className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl mb-2">
-    {/* ভিডিওর টাইটেল যদি কোনো কারণে ডাটাবেজে ফাঁকা থাকে, তবে ব্যাকআপ নাম দেখাবে */}
-    <p className="text-sm font-medium text-gray-200 line-clamp-2 mb-1">
-      {item.video_title || "Processed Video History"}
-    </p>
+    <div className="flex justify-between items-start gap-2">
+      <p className="text-sm font-medium text-gray-200 line-clamp-2 mb-1 flex-1">
+        {item.video_title || "Processed Video History"}
+      </p>
+      <button
+        onClick={() => handleDeleteHistory(item.id)}
+        className="text-red-400 hover:text-red-300 text-xs font-bold px-2 py-1 rounded border border-red-900/50 hover:border-red-700 transition shrink-0"
+        title="Delete"
+      >
+        🗑️
+      </button>
+    </div>
     <div className="flex justify-between items-center text-xs text-gray-500">
       <span className="truncate max-w-[200px]">{item.download_url || "No Link Available"}</span>
       <span className="text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900">
@@ -711,6 +960,7 @@ export default function DownloaderApp() {
     </div>
   </div>
 ))
+
 
         )}
       </div>
