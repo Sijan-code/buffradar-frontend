@@ -1,12 +1,14 @@
 'use client';
 import QualitySelector from './QualitySelector';
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+import { setPendingFile } from './converterStore';
 
 const supabaseUrl = 'https://nvmqjwdkrvwcyjsqnfhh.supabase.co';
 const supabaseAnonKey = 'sb_publishable_bDpW8-uqBYl_MP02kdO2sg_KB3CAC5w';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -61,6 +63,8 @@ const formatDuration = (sec) => {
 };
 
 export default function DownloaderApp() {
+  const router = useRouter();
+  const converterFileInputRef = useRef(null);
   const [inputLinks, setInputLinks] = useState('');
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -301,6 +305,15 @@ export default function DownloaderApp() {
     }
   };
 
+  // 📤 Video converter কার্ড থেকে ফাইল বাছাই করলে /converter পেজে পাঠিয়ে দেওয়া হয়
+  const handleConverterFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // পরে একই ফাইল আবার বাছাই করলেও যাতে onChange ফায়ার হয়
+    if (!file) return;
+    setPendingFile(file);
+    router.push('/converter');
+  };
+
   if (!isClient) return null;
 
   const isDownloading = downloadProgress !== null;
@@ -532,15 +545,19 @@ export default function DownloaderApp() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 mb-5">
-              {/* 🔄 Video converter কার্ড — CONVERT ট্যাবে নিয়ে গিয়ে লিংক ইনপুটে ফোকাস করবে */}
+              {/* 🔄 Video converter কার্ড — ফাইল বাছাই করলেই /converter পেজে নিয়ে যাবে */}
               <button
                 type="button"
-                onClick={() => {
-                  setActiveTab('convert');
-                  document.getElementById('buff-link-input')?.focus();
-                }}
+                onClick={() => converterFileInputRef.current?.click()}
                 className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 hover:border-emerald-500/40 active:scale-[0.98] transition-all"
               >
+                <input
+                  ref={converterFileInputRef}
+                  type="file"
+                  accept="video/*,audio/*"
+                  className="hidden"
+                  onChange={handleConverterFileChange}
+                />
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
                     <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -555,7 +572,7 @@ export default function DownloaderApp() {
                   <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
                   </svg>
-                  <span className="text-[10px] font-bold text-slate-400">Paste link above</span>
+                  <span className="text-[10px] font-bold text-slate-400">Upload a file</span>
                 </div>
               </button>
 
