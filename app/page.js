@@ -85,12 +85,6 @@ export default function DownloaderApp() {
     if (!session) {
       const { error } = await supabase.auth.signInAnonymously();
       if (error) console.error('Anonymous sign-in failed:', error.message);
-    } else {
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.error('Session refresh failed, re-signing in:', refreshError.message);
-        await supabase.auth.signInAnonymously();
-      }
     }
   })();
 }, []);
@@ -98,11 +92,6 @@ export default function DownloaderApp() {
   const fetchHistory = async () => {
   setShowHistoryModal(true);
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const { error: signInErr } = await supabase.auth.signInAnonymously();
-      if (signInErr) { console.error(signInErr.message); return; }
-    }
     const { data, error } = await supabase
       .from('download_history')
       .select('*')
@@ -117,27 +106,6 @@ export default function DownloaderApp() {
     console.error("Error fetching history:", err);
   }
 };
-
-const handleDeleteHistory = async (id) => {
-  try {
-    const { error } = await supabase
-      .from('download_history')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error("Delete error:", error.message);
-      alert("ডিলিট করা যায়নি: " + error.message);
-      return;
-    }
-    // লোকাল state থেকেও সাথে সাথে সরিয়ে দেওয়া হচ্ছে
-    setHistoryData((prev) => prev.filter((item) => item.id !== id));
-  } catch (err) {
-    console.error("Error deleting history:", err);
-  }
-};
-
-
 
   const handleFetchLinks = async () => {
     if (!inputLinks.trim()) {
@@ -506,13 +474,14 @@ const handleDeleteHistory = async (id) => {
     {/* 🚀 মেইন কন্টেন্ট সেকশন শুরু */}
     <main className="max-w-xl w-full mx-auto px-4 py-8 flex-grow">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">Creator Dashboard</h1>
-          <p className="text-slate-400 text-xs">Multi-Action Video Downloader & Deep Insight Pipeline.</p>
+          <h1 className="text-2xl sm:text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">Free online video downloader</h1>
+          <p className="text-slate-400 text-xs">Download, convert and edit with AI — all in one place.</p>
         </div>
 
         <div className="bg-slate-900/40 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-800/80 shadow-2xl neon-glow mb-8 transition-all">
           <div className="relative flex items-center mb-3">
             <input
+              id="buff-link-input"
               type="text"
               value={inputLinks}
               onChange={(e) => setInputLinks(e.target.value)}
@@ -553,6 +522,83 @@ const handleDeleteHistory = async (id) => {
             ))}
           </div>
         </div>
+
+        {/* 🧰 Quick tools: হোমপেজে লিংক ছাড়াই কনভার্টার/এডিটরে ঢোকার শর্টকাট — কোনো ভিডিও ফেচ হওয়ার আগ পর্যন্ত দেখাবে */}
+        {!processedVideo && (
+          <>
+            <div className="flex items-center justify-between mb-2 px-0.5">
+              <span className="text-[11px] font-bold text-slate-400">Quick tools</span>
+              <span className="text-[10px] text-slate-600">No link needed</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 mb-5">
+              {/* 🔄 Video converter কার্ড — CONVERT ট্যাবে নিয়ে গিয়ে লিংক ইনপুটে ফোকাস করবে */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('convert');
+                  document.getElementById('buff-link-input')?.focus();
+                }}
+                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 hover:border-emerald-500/40 active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h11m0 0-4-4m4 4-4 4M16 17H5m0 0 4 4m-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">NEW</span>
+                </div>
+                <p className="text-xs font-bold text-white mb-0.5">Video converter</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">MP4, MOV, WebM, MKV and more</p>
+                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center gap-1.5">
+                  <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-slate-400">Paste link above</span>
+                </div>
+              </button>
+
+              {/* ✂️ Online video editing কার্ড — এখনো Coming soon, শুধু প্লেসহোল্ডার */}
+              <div
+                aria-disabled="true"
+                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 opacity-60 cursor-not-allowed select-none"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="6" cy="6" r="2.5" strokeWidth="2" />
+                      <circle cx="6" cy="18" r="2.5" strokeWidth="2" />
+                      <path strokeLinecap="round" strokeWidth="2" d="M20 6 8.5 12 20 18M8 12H4" />
+                    </svg>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">SOON</span>
+                </div>
+                <p className="text-xs font-bold text-white mb-0.5">Online video editing</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">Trim, crop and edit with AI</p>
+                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-slate-500">Coming soon</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mb-5">
+              <div className="flex-1 h-px bg-slate-800"></div>
+              <span className="text-[9px] text-slate-600 whitespace-nowrap">or fetch from a source</span>
+              <div className="flex-1 h-px bg-slate-800"></div>
+            </div>
+
+            {/* 🌐 সোর্স-ফিল্টার পিল রো — এখন শুধু ডেকোরেটিভ */}
+            <div className="flex gap-1.5 mb-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <span className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full border border-emerald-500 text-emerald-400 whitespace-nowrap">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="2" /><path strokeWidth="2" d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
+                All sources
+              </span>
+              <span className="flex items-center gap-1 text-[10px] px-3 py-1.5 rounded-full border border-slate-800 text-slate-400 whitespace-nowrap">Facebook</span>
+              <span className="flex items-center gap-1 text-[10px] px-3 py-1.5 rounded-full border border-slate-800 text-slate-400 whitespace-nowrap">YouTube</span>
+            </div>
+          </>
+        )}
 
         {processedVideo ? (
           <div className="w-full bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl">
@@ -940,18 +986,10 @@ const handleDeleteHistory = async (id) => {
         ) : (
           historyData.map((item) => (
   <div key={item.id || Math.random()} className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl mb-2">
-    <div className="flex justify-between items-start gap-2">
-      <p className="text-sm font-medium text-gray-200 line-clamp-2 mb-1 flex-1">
-        {item.video_title || "Processed Video History"}
-      </p>
-      <button
-        onClick={() => handleDeleteHistory(item.id)}
-        className="text-red-400 hover:text-red-300 text-xs font-bold px-2 py-1 rounded border border-red-900/50 hover:border-red-700 transition shrink-0"
-        title="Delete"
-      >
-        🗑️
-      </button>
-    </div>
+    {/* ভিডিওর টাইটেল যদি কোনো কারণে ডাটাবেজে ফাঁকা থাকে, তবে ব্যাকআপ নাম দেখাবে */}
+    <p className="text-sm font-medium text-gray-200 line-clamp-2 mb-1">
+      {item.video_title || "Processed Video History"}
+    </p>
     <div className="flex justify-between items-center text-xs text-gray-500">
       <span className="truncate max-w-[200px]">{item.download_url || "No Link Available"}</span>
       <span className="text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900">
@@ -960,7 +998,6 @@ const handleDeleteHistory = async (id) => {
     </div>
   </div>
 ))
-
 
         )}
       </div>
