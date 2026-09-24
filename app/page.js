@@ -152,6 +152,61 @@ export default function DownloaderApp() {
   }
 };
 
+// 🗑️ একটা হিস্ট্রি আইটেম স্থায়ীভাবে মুছে ফেলা (মোবাইল/PC/iOS — সব জায়গায় একই লজিক, কারণ এটা Supabase-এর
+  // সাথে সরাসরি কথা বলে, ব্রাউজারের কোনো লোকাল স্টোরেজ/OS-স্পেসিফিক ফিচারের উপর নির্ভর করে না)
+  const handleDeleteHistoryItem = async (item) => {
+    if (!item || item.id === undefined || item.id === null) return;
+    const ok = window.confirm("এই হিস্ট্রি আইটেমটা কি স্থায়ীভাবে মুছে ফেলতে চান? এটা আর ফেরত আনা যাবে না।");
+    if (!ok) return;
+
+    setDeletingHistoryId(item.id);
+    try {
+      const { error } = await runSupabaseQuery(() =>
+        supabase.from('download_history').delete().eq('id', item.id)
+      );
+
+      if (error) {
+        console.error("Delete error:", error.message);
+        alert("মুছে ফেলা যায়নি। আবার চেষ্টা করুন।");
+        return;
+      }
+      // সার্ভার থেকে মোছার পর লোকাল লিস্ট থেকেও সাথে সাথে সরিয়ে দেওয়া হচ্ছে
+      setHistoryData((prev) => prev.filter((h) => h.id !== item.id));
+    } catch (err) {
+      console.error("Delete try-catch error:", err);
+      alert("মুছে ফেলা যায়নি। ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।");
+    } finally {
+      setDeletingHistoryId(null);
+    }
+  };
+
+  // 🧹 পুরো হিস্ট্রি লিস্ট একসাথে মুছে ফেলা
+  const handleClearAllHistory = async () => {
+    if (historyData.length === 0) return;
+    const ok = window.confirm(`সব (${historyData.length}টা) হিস্ট্রি আইটেম কি স্থায়ীভাবে মুছে ফেলতে চান?`);
+    if (!ok) return;
+
+    setClearingAllHistory(true);
+    try {
+      const ids = historyData.map((h) => h.id).filter((id) => id !== undefined && id !== null);
+      const { error } = await runSupabaseQuery(() =>
+        supabase.from('download_history').delete().in('id', ids)
+      );
+
+      if (error) {
+        console.error("Clear all error:", error.message);
+        alert("সব মুছে ফেলা যায়নি। আবার চেষ্টা করুন।");
+        return;
+      }
+      setHistoryData([]);
+    } catch (err) {
+      console.error("Clear all try-catch error:", err);
+      alert("সব মুছে ফেলা যায়নি। ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।");
+    } finally {
+      setClearingAllHistory(false);
+    }
+  };
+
   const handleFetchLinks = async () => {
     if (!inputLinks.trim()) {
       alert("অনুগ্রহ করে একটি সঠিক লিংক পেস্ট করুন!");
