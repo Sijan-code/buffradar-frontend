@@ -62,6 +62,38 @@ const formatDuration = (sec) => {
   return r === 0 ? m + " min" : m + " min " + r + " sec";
 };
 
+// 🏷️ প্রতিটা ট্যাব বাটনের পাশে ছোট লোগো/আইকন — ইউজার সহজে চিনতে পারবে কোনটা কী কাজ করে
+const TAB_ICON = {
+  video: (
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.55-2.4A1 1 0 0 1 21 8.5v7a1 1 0 0 1-1.45.9L15 14M5 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+    </svg>
+  ),
+  audio: (
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+    </svg>
+  ),
+  convert: (
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h11m0 0-4-4m4 4-4 4M16 17H5m0 0 4 4m-4-4 4-4" />
+    </svg>
+  ),
+  'deep insight': (
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="7" strokeWidth="2" />
+      <path strokeLinecap="round" strokeWidth="2" d="m21 21-4.3-4.3" />
+    </svg>
+  ),
+  editor: (
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="6" cy="6" r="2.5" strokeWidth="2" />
+      <circle cx="6" cy="18" r="2.5" strokeWidth="2" />
+      <path strokeLinecap="round" strokeWidth="2" d="M20 6 8.5 12 20 18M8 12H4" />
+    </svg>
+  ),
+};
+
 export default function DownloaderApp() {
   const router = useRouter();
   const converterFileInputRef = useRef(null);
@@ -81,6 +113,15 @@ export default function DownloaderApp() {
   const [convertFormat, setConvertFormat] = useState('mp4');
   const [convertQuality, setConvertQuality] = useState('1080p');
   const [convertBitrate, setConvertBitrate] = useState('192kbps');
+
+  // ✂️🪄📉 Editor ট্যাবের স্টেট (Trim & Crop / AI Object Remover / Compressor)
+  const [editorTool, setEditorTool] = useState(null); // 'trim' | 'remove' | 'compress'
+  const [trimStart, setTrimStart] = useState(0);
+  const [trimEnd, setTrimEnd] = useState(0);
+  const [cropPreset, setCropPreset] = useState('original');
+  const [removePosition, setRemovePosition] = useState('bottom-band');
+  const [compressLevel, setCompressLevel] = useState('medium');
+  const [editedFile, setEditedFile] = useState(null); // { blob, fileUrl, fileName }
 
   useEffect(() => {
   setIsClient(true);
@@ -149,6 +190,11 @@ export default function DownloaderApp() {
                 copyrightStatus: data.copyright_status || "Safe",
                 thumbnail: data.thumbnail || ""
             });
+            // Editor ট্যাবের স্টেট রিসেট, নতুন ভিডিওর দৈর্ঘ্য অনুযায়ী trim end বসানো
+            setEditorTool(null);
+            setEditedFile(null);
+            setTrimStart(0);
+            setTrimEnd(data.duration && data.duration > 0 ? data.duration : 0);
             // Supabase-এ ডাউনলোড হিস্ট্রি সেভ করার লজিক
       try {
         const { error: sbError } = await supabase
@@ -187,6 +233,10 @@ export default function DownloaderApp() {
             chapters: [{ start: "00:00", title: "Full Video Stream" }],
             copyrightStatus: "Verification Skipped"
         });
+        setEditorTool(null);
+        setEditedFile(null);
+        setTrimStart(0);
+        setTrimEnd(0);
         setLoading(false);
         setStatusMsg("Notice: Secured via Emergency Gateway!");
     }
@@ -303,6 +353,93 @@ export default function DownloaderApp() {
       setDownloadProgress(null);
       alert(error.message || "কনভার্ট করা যায়নি।");
     }
+  };
+
+  // ✂️🪄📉 Editor: Trim & Crop / AI Object Remover / Compressor — /api/edit কল করে
+  const handleEditorApply = async () => {
+    if (!processedVideo || !editorTool) return;
+    const sourceUrl = processedVideo.sourceUrl || processedVideo.hdLink;
+    if (!sourceUrl) {
+      alert("এডিট করার লিঙ্ক পাওয়া যায়নি!");
+      return;
+    }
+    let progressInterval;
+    try {
+      setEditedFile(null);
+      setDownloadProgress(0);
+
+      const params = new URLSearchParams({ url: sourceUrl, mode: editorTool });
+      if (editorTool === 'trim') {
+        params.set('start', String(trimStart || 0));
+        params.set('end', String(trimEnd || processedVideo.duration || 0));
+        params.set('crop', cropPreset);
+      } else if (editorTool === 'remove') {
+        params.set('position', removePosition);
+      } else if (editorTool === 'compress') {
+        params.set('level', compressLevel);
+      }
+
+      progressInterval = setInterval(() => {
+        setDownloadProgress((prev) => {
+          if (prev === null || prev >= 95) return prev;
+          return Math.min(95, prev + Math.max(1, Math.round((95 - prev) * 0.05)));
+        });
+      }, 500);
+
+      const response = await fetch(`${API_BASE}/api/edit?${params.toString()}`);
+      if (!response.ok) {
+        let msg = "এডিট করা যায়নি। আবার চেষ্টা করুন।";
+        try {
+          const err = await response.json();
+          if (err && err.detail) msg = err.detail;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const blob = await response.blob();
+
+      clearInterval(progressInterval);
+      setDownloadProgress(100);
+
+      const safeTitle = (processedVideo.title || "media").replace(/[\\/:*?"<>|]+/g, "").trim().substring(0, 40) || "media";
+      const fileName = `${safeTitle}_edited.mp4`;
+      const fileUrl = window.URL.createObjectURL(blob);
+      setEditedFile({ blob, fileUrl, fileName });
+
+      setTimeout(() => setDownloadProgress(null), 600);
+    } catch (error) {
+      console.error("Edit failed:", error);
+      clearInterval(progressInterval);
+      setDownloadProgress(null);
+      alert(error.message || "এডিট করা যায়নি।");
+    }
+  };
+
+  const handleEditedDownload = () => {
+    if (!editedFile) return;
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = editedFile.fileUrl;
+    a.download = editedFile.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // 📤 সরাসরি WhatsApp/Facebook/Telegram-সহ যেকোনো অ্যাপে শেয়ার করতে ডিভাইসের নিজস্ব Share শীট ব্যবহার করা হয়
+  // (এডিট করা ফাইলটি লোকাল ব্লব, তাই পাবলিক লিংক ছাড়া শুধু Web Share API-ই আসল ফাইল শেয়ার করতে পারে)
+  const handleEditedShare = async () => {
+    if (!editedFile) return;
+    try {
+      const file = new File([editedFile.blob], editedFile.fileName, { type: 'video/mp4' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: processedVideo?.title || 'Video' });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // ইউজার নিজেই শেয়ার শীট বন্ধ করে দিলে
+      console.error("Share failed:", err);
+    }
+    alert("এই ব্রাউজারে সরাসরি ফাইল শেয়ার সাপোর্ট নেই। আগে ডাউনলোড করে গ্যালারি/ফাইলস অ্যাপ থেকে শেয়ার করুন।");
   };
 
   // 📤 Video converter কার্ড থেকে ফাইল বাছাই করলে /converter পেজে পাঠিয়ে দেওয়া হয়
@@ -517,12 +654,12 @@ export default function DownloaderApp() {
           </div>
 
           <div className="flex gap-1.5 mt-3 border-t border-slate-800/60 pt-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {['video', 'audio', 'convert', 'deep insight', 'creator'].map((tab) => (
+            {['video', 'audio', 'convert', 'deep insight', 'editor'].map((tab) => (
               <button
                 key={tab}
                 disabled={!processedVideo}
                 onClick={() => setActiveTab(tab)}
-                className={`text-[10px] uppercase font-bold py-2 px-2 rounded-lg border flex-1 text-center whitespace-nowrap ${
+                className={`flex items-center justify-center gap-1 text-[10px] uppercase font-bold py-2 px-2 rounded-lg border flex-1 text-center whitespace-nowrap ${
                   !processedVideo 
                     ? 'opacity-30 border-slate-800 text-slate-600'
                     : activeTab === tab
@@ -530,7 +667,8 @@ export default function DownloaderApp() {
                       : 'bg-slate-950 border-slate-800 text-slate-400'
                 }`}
               >
-                {tab}
+                {TAB_ICON[tab]}
+                <span>{tab}</span>
               </button>
             ))}
           </div>
@@ -958,14 +1096,155 @@ export default function DownloaderApp() {
               );
             })()}
 
-            {activeTab === 'creator' && (
-              <div className="space-y-3">
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-[10px] text-slate-300 truncate">
-                  <strong>Clean Metadata:</strong> {processedVideo.caption}
+            {activeTab === 'editor' && (
+              <div className="space-y-4 text-xs animate-fadeIn">
+
+                {/* ৩টা এডিটিং টুল কার্ড */}
+                <div className="grid grid-cols-1 gap-2.5">
+                  {[
+                    { id: 'trim', icon: '✂️', title: 'Smart Trim & Crop', desc: 'Cut specific duration and resize frames.' },
+                    { id: 'remove', icon: '🪄', title: 'AI Object Remover', desc: 'Wipe out watermarks, logos, and hardcoded subtitles.' },
+                    { id: 'compress', icon: '📉', title: 'Smart Compressor', desc: 'Shrink video file size while preserving HD quality.' },
+                  ].map((tool) => (
+                    <button
+                      key={tool.id}
+                      type="button"
+                      onClick={() => { setEditorTool(tool.id); setEditedFile(null); }}
+                      className={`text-left p-3.5 rounded-2xl border transition-all active:scale-[0.98] flex items-start gap-3 ${
+                        editorTool === tool.id
+                          ? 'bg-emerald-500/10 border-emerald-500/60'
+                          : 'bg-slate-950 border-slate-800 hover:border-slate-600'
+                      }`}
+                    >
+                      <span className="text-xl leading-none">{tool.icon}</span>
+                      <span className="flex-1">
+                        <span className="block text-xs font-bold text-white">{tool.title}</span>
+                        <span className="block text-[10px] text-slate-500 mt-0.5 leading-relaxed">{tool.desc}</span>
+                      </span>
+                      {editorTool === tool.id && <span className="text-emerald-400 text-xs mt-0.5">●</span>}
+                    </button>
+                  ))}
                 </div>
-                <button onClick={() => { navigator.clipboard.writeText(processedVideo.caption); alert("Metadata Copied!"); }} className="w-full bg-slate-800 text-emerald-400 text-xs font-bold py-2.5 rounded-lg border border-slate-700">
-                  Clean Meta & Copy
-                </button>
+
+                {/* ✂️ Trim & Crop কন্ট্রোল */}
+                {editorTool === 'trim' && (
+                  <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start (sec)</label>
+                        <input
+                          type="number" min="0" value={trimStart}
+                          onChange={(e) => setTrimStart(Number(e.target.value) || 0)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">End (sec)</label>
+                        <input
+                          type="number" min="0" value={trimEnd}
+                          onChange={(e) => setTrimEnd(Number(e.target.value) || 0)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Crop / Aspect ratio</label>
+                      <div className="flex gap-1.5">
+                        {[
+                          { id: 'original', label: 'Original' },
+                          { id: '9:16', label: '9:16' },
+                          { id: '1:1', label: '1:1' },
+                          { id: '16:9', label: '16:9' },
+                        ].map((c) => (
+                          <button
+                            key={c.id} type="button" onClick={() => setCropPreset(c.id)}
+                            className={`flex-1 py-2 rounded-lg border text-[10px] font-bold transition-all ${cropPreset === c.id ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 🪄 AI Object Remover কন্ট্রোল */}
+                {editorTool === 'remove' && (
+                  <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Where's the watermark / subtitle?</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { id: 'top-left', label: 'Top-left' },
+                        { id: 'top-right', label: 'Top-right' },
+                        { id: 'top-band', label: 'Top band' },
+                        { id: 'bottom-left', label: 'Bottom-left' },
+                        { id: 'bottom-right', label: 'Bottom-right' },
+                        { id: 'bottom-band', label: 'Bottom band' },
+                      ].map((p) => (
+                        <button
+                          key={p.id} type="button" onClick={() => setRemovePosition(p.id)}
+                          className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${removePosition === p.id ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                      টিপ: হার্ডকোডেড সাবটাইটেল সাধারণত "Bottom band"-এ থাকে, লোগো/ওয়াটারমার্ক সাধারণত কোনায় থাকে।
+                    </p>
+                  </div>
+                )}
+
+                {/* 📉 Smart Compressor কন্ট্রোল */}
+                {editorTool === 'compress' && (
+                  <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Compression level</label>
+                    <div className="flex gap-1.5">
+                      {[
+                        { id: 'light', label: 'Light', note: 'Best quality' },
+                        { id: 'medium', label: 'Medium', note: 'Balanced' },
+                        { id: 'high', label: 'High', note: 'Smallest size' },
+                      ].map((lvl) => (
+                        <button
+                          key={lvl.id} type="button" onClick={() => setCompressLevel(lvl.id)}
+                          className={`flex-1 py-2 rounded-lg border text-center transition-all ${compressLevel === lvl.id ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
+                        >
+                          <span className="block text-[10px] font-bold">{lvl.label}</span>
+                          <span className="block text-[8px] opacity-70">{lvl.note}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Apply বাটন */}
+                {editorTool && (
+                  <button
+                    onClick={handleEditorApply}
+                    disabled={downloadProgress !== null}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 text-slate-950 text-xs font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+                  >
+                    {downloadProgress !== null ? `⏳ Processing ${downloadProgress}%...` : `⚡ Apply & Process`}
+                  </button>
+                )}
+
+                {/* প্রসেসিং শেষে ডাউনলোড + শেয়ার */}
+                {editedFile && (
+                  <div className="grid grid-cols-2 gap-2.5 animate-fadeIn">
+                    <button
+                      onClick={handleEditedDownload}
+                      className="py-3 rounded-2xl bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5"
+                    >
+                      ⬇️ Download
+                    </button>
+                    <button
+                      onClick={handleEditedShare}
+                      className="py-3 rounded-2xl bg-slate-800 border border-slate-700 text-sky-400 text-xs font-bold flex items-center justify-center gap-1.5"
+                    >
+                      📤 Share
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
