@@ -12,6 +12,27 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
+// 🌐 yt-dlp সাপোর্টেড ১৭টি জনপ্রিয় সোর্স — সোর্স-ফিল্টার রো-তে অটো-স্লাইড করে দেখানোর জন্য
+const SUPPORTED_SOURCES = [
+  { name: 'YouTube', bg: '#FF0000', icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white"><path d="M8 5v14l11-7z" /></svg> },
+  { name: 'Facebook', bg: '#1877F2', icon: <span className="text-sm font-bold leading-none">f</span> },
+  { name: 'Instagram', bg: 'linear-gradient(45deg,#f58529,#dd2a7b,#8134af)', icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="white" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.3" cy="6.7" r="1" fill="white" stroke="none" /></svg> },
+  { name: 'TikTok', bg: '#000000', icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white"><path d="M16.6 3h-3.2v11.6a2.9 2.9 0 1 1-2.4-2.9V8.4a6 6 0 1 0 5.6 6V9.2a7.5 7.5 0 0 0 4.4 1.4V7.5a4.3 4.3 0 0 1-4.4-4.1z" /></svg> },
+  { name: 'X', bg: '#000000', icon: <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="white"><path d="M3 3l7.4 9.5L3.4 21h2.6l5.9-6.8L16.8 21H21l-7.7-9.9L20.4 3h-2.6l-5.4 6.3L8 3H3z" /></svg> },
+  { name: 'Vimeo', bg: '#1AB7EA', icon: <span className="text-sm font-bold leading-none">V</span> },
+  { name: 'Dailymotion', bg: '#0D0D0D', icon: <span className="text-sm font-bold leading-none">D</span> },
+  { name: 'Reddit', bg: '#FF4500', icon: <span className="text-sm font-bold leading-none">R</span> },
+  { name: 'Twitch', bg: '#9146FF', icon: <span className="text-sm font-bold leading-none">T</span> },
+  { name: 'Pinterest', bg: '#E60023', icon: <span className="text-sm font-bold leading-none">P</span> },
+  { name: 'Snapchat', bg: '#FFFC00', icon: <span className="text-sm font-bold leading-none text-black">S</span> },
+  { name: 'Discord', bg: '#5865F2', icon: <span className="text-sm font-bold leading-none">D</span> },
+  { name: 'Telegram', bg: '#26A5E4', icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white"><path d="M21 3 2 10.6l6.1 2 2.1 6.6 3.1-4.1 5 4.1z" /></svg> },
+  { name: 'WhatsApp', bg: '#25D366', icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white"><path d="M12 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.3-1.4A9.9 9.9 0 1 0 12 2zm0 2a7.9 7.9 0 0 1 6.6 12.3l-.3.5.3 2.4-2.4-.6-.5.3A7.9 7.9 0 1 1 12 4z" /></svg> },
+  { name: 'SoundCloud', bg: '#FF5500', icon: <span className="text-sm font-bold leading-none">SC</span> },
+  { name: 'LinkedIn', bg: '#0A66C2', icon: <span className="text-[11px] font-bold leading-none">in</span> },
+  { name: 'Tumblr', bg: '#001935', icon: <span className="text-sm font-bold leading-none">t</span> },
+];
+
 // স্লাইডারের ধাপ: সবচেয়ে ভালো কোয়ালিটি আগে, সবচেয়ে কম শেষে
 const VIDEO_QUALITIES = [
   { id: '2160p', short: '4K', label: '4K Ultra HD' },
@@ -581,6 +602,17 @@ export default function DownloaderApp() {
       .animate-badge-pop {
         animation: badgePop 0.25s ease-out;
       }
+
+      @keyframes sourceMarquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+      .animate-source-marquee {
+        animation: sourceMarquee 28s linear infinite;
+      }
+      .animate-source-marquee:hover {
+        animation-play-state: paused;
+      }
     `}</style>
 
     {/* 🌐 হেডার সেকশন */}
@@ -816,14 +848,39 @@ export default function DownloaderApp() {
               <div className="flex-1 h-px bg-slate-800"></div>
             </div>
 
-            {/* 🌐 সোর্স-ফিল্টার পিল রো — এখন শুধু ডেকোরেটিভ */}
-            <div className="flex gap-1.5 mb-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <span className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full border border-emerald-500 text-emerald-400 whitespace-nowrap">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="2" /><path strokeWidth="2" d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
-                All sources
+            {/* 🌐 সোর্স-ফিল্টার রো — বাঁয়ে "All Sources" ফিক্সড, মাঝে yt-dlp সাপোর্টেড ১৭টি সাইটের লোগো অটো-স্লাইড, ডানে "1700+" ব্যাজ ফিক্সড */}
+            <div className="relative flex items-center gap-2 mb-5">
+              <span className="flex-shrink-0 z-10 flex items-center gap-1.5 text-[10px] font-bold px-3.5 py-2 rounded-full border border-emerald-500 text-emerald-400 whitespace-nowrap bg-slate-950">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="2" /><path strokeWidth="2" d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
+                All Sources
               </span>
-              <span className="flex items-center gap-1 text-[10px] px-3 py-1.5 rounded-full border border-slate-800 text-slate-400 whitespace-nowrap">Facebook</span>
-              <span className="flex items-center gap-1 text-[10px] px-3 py-1.5 rounded-full border border-slate-800 text-slate-400 whitespace-nowrap">YouTube</span>
+
+              <div className="relative flex-1 h-11 overflow-hidden">
+                <div className="absolute inset-y-0 left-0 flex items-center gap-5 animate-source-marquee w-max">
+                  {[...SUPPORTED_SOURCES, ...SUPPORTED_SOURCES].map((s, i) => (
+                    <div key={i} className="flex flex-col items-center gap-1 flex-shrink-0 w-10">
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-md"
+                        style={{ background: s.bg }}
+                      >
+                        {s.icon}
+                      </div>
+                      <span className="text-[8px] text-slate-500 whitespace-nowrap leading-none">{s.name}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-950 to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-950 to-transparent" />
+              </div>
+
+              <span className="flex-shrink-0 z-10 flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap bg-slate-950">
+                <span className="flex -space-x-1.5">
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] ring-2 ring-slate-950" style={{ background: '#FF0000' }}>▶</span>
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold ring-2 ring-slate-950" style={{ background: '#1877F2' }}>f</span>
+                  <span className="w-4 h-4 rounded-full ring-2 ring-slate-950" style={{ background: 'linear-gradient(45deg,#f58529,#dd2a7b,#8134af)' }}></span>
+                </span>
+                1700+
+              </span>
             </div>
           </>
         )}
