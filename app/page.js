@@ -122,6 +122,8 @@ export default function DownloaderApp() {
   const [removePosition, setRemovePosition] = useState('bottom-band');
   const [compressLevel, setCompressLevel] = useState('medium');
   const [editedFile, setEditedFile] = useState(null); // { blob, fileUrl, fileName }
+  const [deletingHistoryId, setDeletingHistoryId] = useState(null);
+  const [clearingAllHistory, setClearingAllHistory] = useState(false);
 
   useEffect(() => {
   setIsClient(true);
@@ -133,6 +135,22 @@ export default function DownloaderApp() {
     }
   })();
 }, []);
+
+  const ensureFreshSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      await supabase.auth.signInAnonymously();
+      return;
+    }
+    const { error } = await supabase.auth.refreshSession();
+    if (error) await supabase.auth.signInAnonymously();
+  };
+
+  const runSupabaseQuery = async (queryFn) => {
+    await ensureFreshSession();
+    return await queryFn();
+  };
+
 
   const fetchHistory = async () => {
   setShowHistoryModal(true);
@@ -1313,6 +1331,7 @@ export default function DownloaderApp() {
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
       </footer>
+
       {showHistoryModal && (
   <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4">
     <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl">
@@ -1322,12 +1341,23 @@ export default function DownloaderApp() {
         <h3 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
           🕒 Download History
         </h3>
-        <button 
-          onClick={() => setShowHistoryModal(false)}
-          className="text-gray-400 hover:text-white text-xl font-bold p-1 transition"
-        >
-          ✕
-        </button>
+        <div className="flex items-center gap-3">
+          {historyData.length > 0 && (
+            <button
+              onClick={handleClearAllHistory}
+              disabled={clearingAllHistory}
+              className="text-[11px] font-bold text-red-400 hover:text-red-300 disabled:opacity-40 transition"
+            >
+              {clearingAllHistory ? "মুছছে..." : "সব মুছুন"}
+            </button>
+          )}
+          <button 
+            onClick={() => setShowHistoryModal(false)}
+            className="text-gray-400 hover:text-white text-xl font-bold p-1 transition"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* মোডাল বডি (হিস্ট্রি লিস্ট) */}
@@ -1336,17 +1366,27 @@ export default function DownloaderApp() {
           <p className="text-center text-gray-500 py-8">কোনো ডাউনলোডের হিস্ট্রি পাওয়া যায়নি।</p>
         ) : (
           historyData.map((item) => (
-  <div key={item.id || Math.random()} className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl mb-2">
-    {/* ভিডিওর টাইটেল যদি কোনো কারণে ডাটাবেজে ফাঁকা থাকে, তবে ব্যাকআপ নাম দেখাবে */}
-    <p className="text-sm font-medium text-gray-200 line-clamp-2 mb-1">
-      {item.video_title || "Processed Video History"}
-    </p>
-    <div className="flex justify-between items-center text-xs text-gray-500">
-      <span className="truncate max-w-[200px]">{item.download_url || "No Link Available"}</span>
-      <span className="text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900">
-        {item.created_at ? new Date(item.created_at).toLocaleDateString() : "Just Now"}
-      </span>
+  <div key={item.id || Math.random()} className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl mb-2 flex items-start gap-2">
+    <div className="flex-1 min-w-0">
+      {/* ভিডিওর টাইটেল যদি কোনো কারণে ডাটাবেজে ফাঁকা থাকে, তবে ব্যাকআপ নাম দেখাবে */}
+      <p className="text-sm font-medium text-gray-200 line-clamp-2 mb-1">
+        {item.video_title || "Processed Video History"}
+      </p>
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <span className="truncate max-w-[160px]">{item.download_url || "No Link Available"}</span>
+        <span className="text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900">
+          {item.created_at ? new Date(item.created_at).toLocaleDateString() : "Just Now"}
+        </span>
+      </div>
     </div>
+    <button
+      onClick={() => handleDeleteHistoryItem(item)}
+      disabled={deletingHistoryId === item.id}
+      className="text-red-400 hover:text-red-300 disabled:opacity-40 text-sm px-1.5 py-0.5 flex-shrink-0"
+      aria-label="Delete history item"
+    >
+      {deletingHistoryId === item.id ? "…" : "🗑️"}
+    </button>
   </div>
 ))
 
@@ -1359,3 +1399,5 @@ export default function DownloaderApp() {
   </div>
 );
 }
+
+      
