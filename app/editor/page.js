@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { takePendingFile } from '../converterStore';
+import Link from 'next/link';
 
 function formatBytes(bytes) {
   if (!bytes && bytes !== 0) return '';
@@ -166,6 +167,31 @@ export default function EditorPage() {
           </div>
         )}
       </main>
+
+      {/* সাইট নেভিগেশন পিল — উপরে Video Edits (active), নিচে Downloader + Converter */}
+<div className="flex flex-col items-center gap-2.5 py-6">
+  <button
+    type="button"
+    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth'})}
+    className="px-5 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
+  >
+    Video Edits
+  </button>
+  <div className="flex items-center gap-2.5">
+    <Link
+      href="/"
+      className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs"
+    >
+      Video Downloader
+    </Link>
+    <Link
+      href="/converter"
+      className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs"
+    >
+      Video Converter
+    </Link>
+  </div>
+</div>
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
