@@ -2,6 +2,7 @@
 import QualitySelector from './QualitySelector';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { setPendingFile } from './converterStore';
 
 const supabaseUrl = 'https://nvmqjwdkrvwcyjsqnfhh.supabase.co';
@@ -131,6 +132,7 @@ export default function DownloaderApp() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
   const [convertFormat, setConvertFormat] = useState('mp4');
   const [convertQuality, setConvertQuality] = useState('1080p');
   const [convertBitrate, setConvertBitrate] = useState('192kbps');
@@ -759,7 +761,7 @@ export default function DownloaderApp() {
           </div>
 
           <div className="flex gap-1.5 mt-3 border-t border-slate-800/60 pt-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {['video', 'audio', 'convert', 'deep insight', 'editor'].map((tab) => (
+            {['video', 'audio', 'convert', 'editor', 'deep insight'].map((tab) => (
               <button
                 key={tab}
                 disabled={!processedVideo}
@@ -778,114 +780,8 @@ export default function DownloaderApp() {
             ))}
           </div>
         </div>
-
-        {/* 🧰 Quick tools: হোমপেজে লিংক ছাড়াই কনভার্টার/এডিটরে ঢোকার শর্টকাট — কোনো ভিডিও ফেচ হওয়ার আগ পর্যন্ত দেখাবে */}
-        {!processedVideo && (
-          <>
-            <div className="flex items-center justify-between mb-2 px-0.5">
-              <span className="text-[11px] font-bold text-slate-400">Quick tools</span>
-              <span className="text-[10px] text-slate-600">No link needed</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 mb-5">
-              {/* 🔄 Video converter কার্ড — ফাইল বাছাই করলেই /converter পেজে নিয়ে যাবে */}
-              <button
-                type="button"
-                onClick={() => converterFileInputRef.current?.click()}
-                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 hover:border-emerald-500/40 active:scale-[0.98] transition-all"
-              >
-                <input
-                  ref={converterFileInputRef}
-                  type="file"
-                  accept="video/*,audio/*"
-                  className="hidden"
-                  onChange={handleConverterFileChange}
-                />
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h11m0 0-4-4m4 4-4 4M16 17H5m0 0 4 4m-4-4 4-4" />
-                    </svg>
-                  </div>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">NEW</span>
-                </div>
-                <p className="text-xs font-bold text-white mb-0.5">Video converter</p>
-                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">MP4, MOV, WebM, MKV and more</p>
-                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center gap-1.5">
-                  <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
-                  </svg>
-                  <span className="text-[10px] font-bold text-slate-400">Upload a file</span>
-                </div>
-              </button>
-
-              {/* ✂️ Online video editing কার্ড — এখনো Coming soon, শুধু প্লেসহোল্ডার */}
-              <div
-                aria-disabled="true"
-                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 opacity-60 cursor-not-allowed select-none"
-              >
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="6" cy="6" r="2.5" strokeWidth="2" />
-                      <circle cx="6" cy="18" r="2.5" strokeWidth="2" />
-                      <path strokeLinecap="round" strokeWidth="2" d="M20 6 8.5 12 20 18M8 12H4" />
-                    </svg>
-                  </div>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">SOON</span>
-                </div>
-                <p className="text-xs font-bold text-white mb-0.5">Online video editing</p>
-                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">Trim, crop and edit with AI</p>
-                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-slate-500">Coming soon</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 mb-5">
-              <div className="flex-1 h-px bg-slate-800"></div>
-              <span className="text-[9px] text-slate-600 whitespace-nowrap">or fetch from a source</span>
-              <div className="flex-1 h-px bg-slate-800"></div>
-            </div>
-
-            {/* 🌐 সোর্স-ফিল্টার রো — বাঁয়ে "All Sources" ফিক্সড, মাঝে yt-dlp সাপোর্টেড ১৭টি সাইটের লোগো অটো-স্লাইড, ডানে "1700+" ব্যাজ ফিক্সড */}
-            <div className="relative flex items-center gap-2 mb-5">
-              <span className="flex-shrink-0 z-10 flex items-center gap-1.5 text-[10px] font-bold px-3.5 py-2 rounded-full border border-emerald-500 text-emerald-400 whitespace-nowrap bg-slate-950">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="2" /><path strokeWidth="2" d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
-                All Sources
-              </span>
-
-              <div className="relative flex-1 h-11 overflow-hidden">
-                <div className="absolute inset-y-0 left-0 flex items-center gap-5 animate-source-marquee w-max">
-                  {[...SUPPORTED_SOURCES, ...SUPPORTED_SOURCES].map((s, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1 flex-shrink-0 w-10">
-                      <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-md"
-                        style={{ background: s.bg }}
-                      >
-                        {s.icon}
-                      </div>
-                      <span className="text-[8px] text-slate-500 whitespace-nowrap leading-none">{s.name}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-950 to-transparent" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-950 to-transparent" />
-              </div>
-
-              <span className="flex-shrink-0 z-10 flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap bg-slate-950">
-                <span className="flex -space-x-1.5">
-                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] ring-2 ring-slate-950" style={{ background: '#FF0000' }}>▶</span>
-                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold ring-2 ring-slate-950" style={{ background: '#1877F2' }}>f</span>
-                  <span className="w-4 h-4 rounded-full ring-2 ring-slate-950" style={{ background: 'linear-gradient(45deg,#f58529,#dd2a7b,#8134af)' }}></span>
-                </span>
-                1700+
-              </span>
-            </div>
-          </>
-        )}
-
-        {processedVideo ? (
+        
+        {processedVideo && (
           <div className="w-full bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl">
 
             {activeTab === 'video' && (
@@ -1378,12 +1274,326 @@ export default function DownloaderApp() {
               </div>
             )}
           </div>
-        ) : (
-          <div className="w-full bg-slate-900/10 border border-dashed border-slate-800 rounded-2xl py-10 text-center text-xs text-slate-600">
-            স্মার্ট ওয়ার্কবেঞ্চ পাইপলাইন দেখতে একটি সলিড ভিডিও লিংক উপরে ফেচ করুন।
-          </div>
         )}
+
+          {/* 🧰 Quick tools: হোমপেজে লিংক ছাড়াই কনভার্টার/এডিটরে ঢোকার শর্টকাট — এখন ভিডিও ফেচ হওয়ার পরও দেখাবে */}
+        <>
+            <div className="flex items-center justify-between mb-2 px-0.5">
+              <span className="text-[11px] font-bold text-slate-400">Quick tools</span>
+              <span className="text-[10px] text-slate-600">No link needed</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 mb-5">
+              {/* 🔄 Video converter কার্ড — ফাইল বাছাই করলেই /converter পেজে নিয়ে যাবে */}
+              <button
+                type="button"
+                onClick={() => converterFileInputRef.current?.click()}
+                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 hover:border-emerald-500/40 active:scale-[0.98] transition-all"
+              >
+                <input
+                  ref={converterFileInputRef}
+                  type="file"
+                  accept="video/*,audio/*"
+                  className="hidden"
+                  onChange={handleConverterFileChange}
+                />
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h11m0 0-4-4m4 4-4 4M16 17H5m0 0 4 4m-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">NEW</span>
+                </div>
+                <p className="text-xs font-bold text-white mb-0.5">Video converter</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">MP4, MOV, WebM, MKV and more</p>
+                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center gap-1.5">
+                  <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-slate-400">Upload a file</span>
+                </div>
+              </button>
+
+              {/* ✂️ Online video editing কার্ড — এখনো Coming soon, শুধু প্লেসহোল্ডার */}
+              <div
+                aria-disabled="true"
+                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 opacity-60 cursor-not-allowed select-none"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="6" cy="6" r="2.5" strokeWidth="2" />
+                      <circle cx="6" cy="18" r="2.5" strokeWidth="2" />
+                      <path strokeLinecap="round" strokeWidth="2" d="M20 6 8.5 12 20 18M8 12H4" />
+                    </svg>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">SOON</span>
+                </div>
+                <p className="text-xs font-bold text-white mb-0.5">Online video editing</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">Trim, crop and edit with AI</p>
+                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-slate-500">Coming soon</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mb-5">
+              <div className="flex-1 h-px bg-slate-800"></div>
+              <span className="text-[9px] text-slate-600 whitespace-nowrap">or fetch from a source</span>
+              <div className="flex-1 h-px bg-slate-800"></div>
+            </div>
+
+            {/* 🌐 সোর্স-ফিল্টার রো — বাঁয়ে "All Sources" ফিক্সড, মাঝে yt-dlp সাপোর্টেড ১৭টি সাইটের লোগো অটো-স্লাইড, ডানে "1700+" ব্যাজ ফিক্সড */}
+            <div className="relative flex items-center gap-2 mb-5">
+              <span className="flex-shrink-0 z-10 flex items-center gap-1.5 text-[10px] font-bold px-3.5 py-2 rounded-full border border-emerald-500 text-emerald-400 whitespace-nowrap bg-slate-950">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="2" /><path strokeWidth="2" d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
+                All Sources
+              </span>
+
+              <div className="relative flex-1 h-11 overflow-hidden">
+                <div className="absolute inset-y-0 left-0 flex items-center gap-5 animate-source-marquee w-max">
+                  {[...SUPPORTED_SOURCES, ...SUPPORTED_SOURCES].map((s, i) => (
+                    <div key={i} className="flex flex-col items-center gap-1 flex-shrink-0 w-10">
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-md"
+                        style={{ background: s.bg }}
+                      >
+                        {s.icon}
+                      </div>
+                      <span className="text-[8px] text-slate-500 whitespace-nowrap leading-none">{s.name}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-950 to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-950 to-transparent" />
+              </div>
+
+              <span className="flex-shrink-0 z-10 flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap bg-slate-950">
+                <span className="flex -space-x-1.5">
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] ring-2 ring-slate-950" style={{ background: '#FF0000' }}>▶</span>
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold ring-2 ring-slate-950" style={{ background: '#1877F2' }}>f</span>
+                  <span className="w-4 h-4 rounded-full ring-2 ring-slate-950" style={{ background: 'linear-gradient(45deg,#f58529,#dd2a7b,#8134af)' }}></span>
+                </span>
+                1700+
+              </span>
+            </div>
+          </>
+
+
+        
+          <section className="w-full mt-1" aria-labelledby="how-to-use-heading">
+            {/* বড় টাইটেল */}
+            <div className="text-center mb-8 px-2">
+              <h2 id="how-to-use-heading" className="text-2xl sm:text-3xl font-black text-white mb-2.5 leading-tight">
+                How to Download Videos with <span className="text-emerald-400">BuffRadar</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                Free online video downloader for YouTube, Facebook, Instagram, TikTok, X, Vimeo and 1700+ sites — no software or extension required.
+              </p>
+            </div>
+
+            {/* ধাপে ধাপে — zigzag লেআউট, ব্রাউজার মকআপ ফ্রেম সহ */}
+            <div className="max-w-4xl mx-auto space-y-6 sm:space-y-10">
+              {[
+                {
+                  step: '1',
+                  title: 'Paste your video link',
+                  desc: 'Copy the video URL from YouTube, Facebook, TikTok, Instagram or any of the 1700+ supported sites, then open BuffRadar.',
+                  img: '/images/step1.png',
+                },
+                {
+                  step: '2',
+                  title: 'Fetch the video',
+                  desc: 'Paste the link into the box and tap Fetch. BuffRadar loads the video with its preview and details instantly.',
+                  img: '/images/step2.png',
+                },
+                {
+                  step: '3',
+                  title: 'Choose quality & download',
+                  desc: 'Pick your preferred video resolution (up to 4K) or audio bitrate (up to 320kbps), then tap Process & Complete Download.',
+                  img: '/images/step3.png',
+                },
+              ].map((s, i) => (
+                <div
+                  key={s.step}
+                  className={`flex flex-col sm:flex-row ${
+                    i % 2 === 1 ? 'sm:flex-row-reverse' : ''
+                  } items-center gap-6 sm:gap-10 bg-slate-900/40 rounded-3xl p-5 sm:p-7 shadow-xl shadow-black/30 hover:bg-slate-900/60 transition-all`}
+                >
+                  {/* টেক্সট */}
+                  <div className="flex-1 w-full">
+                    <div className="flex items-center gap-3 mb-2.5">
+                      <span className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 text-sm font-black flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                        {s.step}
+                      </span>
+                      <h3 className="text-base sm:text-xl font-bold text-white leading-snug">{s.title}</h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+                  </div>
+
+                  {/* ছবি — মিনি ব্রাউজার ফ্রেম + গ্লো */}
+                  <div className="flex-1 w-full relative">
+                    <div className="absolute -inset-3 bg-emerald-500/10 blur-2xl rounded-3xl" />
+                    <div className="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border-b border-slate-800">
+                        <span className="w-2 h-2 rounded-full bg-red-500/70" />
+                        <span className="w-2 h-2 rounded-full bg-yellow-500/70" />
+                        <span className="w-2 h-2 rounded-full bg-green-500/70" />
+                      </div>
+                      <img src={s.img} alt={s.title} className="w-full object-cover" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+
+            
+
+            {/* কেন BuffRadar */}
+            <div className="mt-5 bg-slate-900/30 border border-slate-800 rounded-2xl p-4">
+              <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Why choose BuffRadar</h3>
+              <ul className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-400">
+                <li>✅ No app or extension needed</li>
+                <li>✅ Supports 1700+ sites</li>
+                <li>✅ Up to 4K video quality</li>
+                <li>✅ MP3 / audio extraction</li>
+                <li>✅ 100% free &amp; unlimited</li>
+                <li>✅ Works on mobile &amp; desktop</li>
+              </ul>
+            </div>
+          </section>
+      
+      {/* প্রবন্ধ অংশ — SEO-এর জন্য প্রাকৃতিক ভাষায় লেখা */}
+            <div className="mt-6 bg-slate-900/20 border border-slate-800 rounded-2xl p-4 sm:p-6">
+              <h3 className="text-sm sm:text-lg font-bold text-white mb-3">How to Use BuffRadar's Full Toolkit</h3>
+              <div className="space-y-3 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                <p>
+                  Beyond simple downloading, BuffRadar doubles as a lightweight media toolkit. Once you've fetched a video from YouTube, Facebook, Instagram, TikTok or any of the 1700+ supported sites, you can switch between tabs without pasting the link again — Video and Audio for straightforward downloads, Convert to change the file format, Deep Insight to inspect its tags, and Editor to make quick edits.
+                </p>
+                <p>
+                  Don't have a link handy? The Video Converter and Online Video Editing cards on the homepage let you upload a file straight from your phone or computer and run it through the same Convert and Editor tools — no fetching required.
+                </p>
+                <p>
+                  Creators researching content often use Deep Insight before reposting a clip: it surfaces the original video's hashtags and flags whether the footage is safe to repost elsewhere, helping you avoid copyright strikes on other platforms.
+                </p>
+              </div>
+            </div>
+
+            {/* FAQ — accordion স্টাইল */}
+            <div className="mt-4 bg-slate-900/20 border border-slate-800 rounded-2xl p-4 sm:p-6">
+              <h3 className="text-sm sm:text-lg font-bold text-white mb-3">Frequently Asked Questions</h3>
+              <div className="divide-y divide-slate-800">
+                {[
+                  {
+                    q: 'Is BuffRadar free to use?',
+                    a: 'Yes. Downloading, converting and basic editing are free and unlimited. Go Premium unlocks extra perks for power users.',
+                  },
+                  {
+                    q: 'Which sites does BuffRadar support?',
+                    a: 'YouTube, Facebook, Instagram, TikTok, X, Vimeo, Reddit, Twitch, Pinterest and 1700+ other sites.',
+                  },
+                  {
+                    q: 'What is the maximum video quality I can download?',
+                    a: 'Up to 4K for video, and up to 320kbps for audio — pick your target from the quality buttons before downloading.',
+                  },
+                  {
+                    q: 'Can I convert or edit a video without pasting a link?',
+                    a: 'Yes. Use the Video Converter or Online Video Editing cards on the homepage to upload a file from your device directly.',
+                  },
+                  {
+                    q: 'Will reposting a downloaded video cause copyright issues?',
+                    a: 'Use Deep Insight after fetching a video to check its Safe to Repost status and view its original hashtags before you repost it elsewhere.',
+                  },
+                ].map((item, i) => (
+                  <div key={item.q} className="py-3">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                      className="w-full flex items-center justify-between gap-3 text-left"
+                    >
+                      <span className="text-xs sm:text-sm font-semibold text-white">{item.q}</span>
+                      <span
+                        className={`shrink-0 text-emerald-400 transition-transform duration-200 ${
+                          openFaq === i ? 'rotate-180' : ''
+                        }`}
+                      >
+                        ▾
+                      </span>
+                    </button>
+                    {openFaq === i && (
+                      <p className="text-xs text-slate-400 leading-relaxed mt-2 pr-6">{item.a}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* FAQ স্ট্রাকচার্ড ডেটা — Google rich snippet-এর জন্য */}
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@type': 'FAQPage',
+                  mainEntity: [
+                    {
+                      '@type': 'Question',
+                      name: 'Is BuffRadar free to use?',
+                      acceptedAnswer: { '@type': 'Answer', text: 'Yes. Downloading, converting and basic editing are free and unlimited. Go Premium unlocks extra perks for power users.' },
+                    },
+                    {
+                      '@type': 'Question',
+                      name: 'Which sites does BuffRadar support?',
+                      acceptedAnswer: { '@type': 'Answer', text: 'YouTube, Facebook, Instagram, TikTok, X, Vimeo, Reddit, Twitch, Pinterest and 1700+ other sites.' },
+                    },
+                    {
+                      '@type': 'Question',
+                      name: 'What is the maximum video quality I can download?',
+                      acceptedAnswer: { '@type': 'Answer', text: 'Up to 4K for video, and up to 320kbps for audio.' },
+                    },
+                    {
+                      '@type': 'Question',
+                      name: 'Can I convert or edit a video without pasting a link?',
+                      acceptedAnswer: { '@type': 'Answer', text: 'Yes, using the Video Converter or Online Video Editing cards to upload a file directly.' },
+                    },
+                    {
+                      '@type': 'Question',
+                      name: 'Will reposting a downloaded video cause copyright issues?',
+                      acceptedAnswer: { '@type': 'Answer', text: 'Deep Insight shows a Safe to Repost check and the video\'s original hashtags before you repost it elsewhere.' },
+                    },
+                  ],
+                }),
+              }}
+            />
+
+
+ 
       </main>
+
+      {/* সাইট নেভিগেশন পিল — উপরে Video Edits, নিচে Downloader + Converter */}
+      <div className="flex flex-col items-center gap-2.5 py-6">
+        <Link
+          href="/editor"
+          className="px-5 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs font-bold hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
+        >
+          Video Edits
+        </Link>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/"
+            className="px-4 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
+          >
+            Video Downloader
+          </Link>
+          <Link
+            href="/converter"
+            className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs font-bold hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
+          >
+            Video Converter
+          </Link>
+        </div>
+      </div>
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
