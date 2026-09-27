@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { takePendingFile } from '../converterStore';
+import Link from 'next/link';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -36,6 +37,60 @@ const AUDIO_BITRATES = [
   { id: '96kbps', label: '96kbps' },
 ];
 
+const CONVERT_STEPS = [
+  {
+    title: 'Upload your file',
+    desc: 'Drag & drop or browse a video/audio file from your device.',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
+    ),
+  },
+  {
+    title: 'Pick a format',
+    desc: 'Choose an output like MP4, WebM, MP3, WAV and more.',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0 1 14.3-4.9M20 15a8 8 0 0 1-14.3 4.9" />
+    ),
+  },
+  {
+    title: 'Set quality',
+    desc: 'Select a resolution or bitrate that fits your needs.',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 21V9m8 12V3m8 18v-6" />
+    ),
+  },
+  {
+    title: 'Convert & download',
+    desc: 'Hit convert and save the finished file straight to your device.',
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0 0 4-4m-4 4-4-4M4 20h16" />
+    ),
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: 'Is this video converter really free?',
+    a: 'Yes. BuffRadar converter is completely free to use, with no hidden charges or watermarks added to your files.',
+  },
+  {
+    q: 'Do you store my uploaded files?',
+    a: 'No. Your file is processed just to create the converted output and is not kept on our servers afterward.',
+  },
+  {
+    q: 'What is the maximum file length or size I can convert?',
+    a: 'You can convert videos up to 15 minutes long at up to 1080p quality. Longer or larger files may take more time or fail depending on your connection.',
+  },
+  {
+    q: 'How long does converting take?',
+    a: 'Most short clips convert in under a minute. Longer videos or higher quality (like 1080p) can take a few minutes \u2014 keep the tab open while it processes.',
+  },
+  {
+    q: 'Which formats can I convert between?',
+    a: 'Video: MP4, WebM, MKV, MOV, AVI and GIF. Audio: MP3, M4A, OGG, WAV and FLAC you can also extract audio directly from a video file.',
+  },
+];
+
 function formatBytes(bytes) {
   if (!bytes && bytes !== 0) return '';
   if (bytes < 1024) return `${bytes} B`;
@@ -49,14 +104,16 @@ function formatBytes(bytes) {
 export default function ConverterPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
+
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  const [format, setFormat] = useState('m4');
-  const [quality, setQuality ] = useState('1080');
+  const [format, setFormat] = useState('mp4');
+  const [quality, setQuality] = useState('1080p');
   const [bitrate, setBitrate] = useState('192kbps');
   const [converting, setConverting] = useState(false);
   const [progress, setProgress] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [openFaq, setOpenFaq] = useState(null);
   const [doneMsg, setDoneMsg] = useState('');
 
   // হোমপেজ থেকে "Upload a file" দিয়ে আসা ফাইল থাকলে সেটা তুলে নেওয়া হচ্ছে
@@ -259,10 +316,32 @@ export default function ConverterPage() {
               </div>
             </div>
 
-            {/* 🎯 ফরম্যাট বাছাই */}
-            <p className="text-[11px] font-bold text-slate-400 mb-2">Convert to</p>
+            {/* 🎯 ফরম্যাট বাছাই — ভিডিও ও অডিও আলাদা গ্রুপে (হোমপেজের CONVERT ট্যাবের মতো) */}
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Video formats:</p>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-5">
-              {CONVERT_FORMATS.map((f) => {
+              {CONVERT_FORMATS.filter((f) => f.kind === 'video' || f.kind === 'gif').map((f) => {
+                const active = f.id === format;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFormat(f.id)}
+                    className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
+                      active
+                        ? 'bg-violet-500 border-violet-400 text-slate-950 shadow-md shadow-violet-500/20'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-600'
+                    }`}
+                  >
+                    <p className="text-xs font-black">{f.label}</p>
+                    <p className={`text-[9px] ${active ? 'text-slate-900/70' : 'text-slate-500'}`}>{f.note}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Audio formats:</p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-5">
+              {CONVERT_FORMATS.filter((f) => f.kind === 'audio').map((f) => {
                 const active = f.id === format;
                 return (
                   <button
@@ -285,7 +364,7 @@ export default function ConverterPage() {
             {/* ⚙️ কোয়ালিটি / বিটরেট */}
             {activeFormat.kind === 'video' && (
               <div className="mb-5">
-                <p className="text-[11px] font-bold text-slate-400 mb-2">Quality</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Max resolution:</p>
                 <div className="flex flex-wrap gap-1.5">
                   {VIDEO_QUALITIES.map((q) => (
                     <button
@@ -307,7 +386,7 @@ export default function ConverterPage() {
 
             {activeFormat.kind === 'audio' && !activeFormat.lossless && (
               <div className="mb-5">
-                <p className="text-[11px] font-bold text-slate-400 mb-2">Bitrate</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Bitrate:</p>
                 <div className="flex flex-wrap gap-1.5">
                   {AUDIO_BITRATES.map((b) => (
                     <button
@@ -347,7 +426,7 @@ export default function ConverterPage() {
                 disabled={converting}
                 className="w-full bg-violet-500 hover:bg-violet-400 disabled:bg-violet-800 text-slate-950 font-black py-3 rounded-xl text-sm transition-all active:scale-[0.98] shadow-lg shadow-violet-500/20"
               >
-                🔄 Convert to {activeFormat.label}
+                🔄 Convert to {activeFormat.label} & Download
               </button>
             )}
 
@@ -363,7 +442,136 @@ export default function ConverterPage() {
         <p className="text-[10px] text-slate-600 text-center leading-relaxed">
           কনভার্ট হতে ফাইলের সাইজ অনুযায়ী কয়েক মিনিট লাগতে পারে — ট্যাব খোলা রাখুন।
         </p>
+
+        {/* 🪜 How it works — ৪ ধাপ */}
+        <section className="mt-16 pt-10 border-t border-slate-900">
+          <h2 className="text-lg font-black text-white mb-5 text-center">How to Convert Videos Online</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {CONVERT_STEPS.map((step, i) => (
+              <div key={i} className="bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center mb-2.5">
+                  <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {step.icon}
+                  </svg>
+                </div>
+                <p className="text-xs font-bold text-white mb-0.5">
+                  {i + 1}. {step.title}
+                </p>
+                <p className="text-[10px] text-slate-500 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 📝 মূল আর্টিকেল — SEO-এর জন্য */}
+        <section className="mt-14 pt-10 border-t border-slate-900 text-slate-300">
+          <h2 className="text-lg font-black text-white mb-3">Free Online Video Converter,Convert to Any Format</h2>
+          <p className="text-xs leading-relaxed mb-4">
+            BuffRadar video converter lets you switch any video or audio file into the format you actually need
+            right from your browser, with no software to install. Whether you preparing a clip for a specific
+            device, shrinking a file to save space, or pulling the audio out of a video, you can do it here in a
+            few clicks.
+          </p>
+
+          <h3 className="text-sm font-bold text-white mb-2">Which format should you choose?</h3>
+          <ul className="text-xs leading-relaxed space-y-2 mb-4">
+            <li>
+              <span className="text-violet-400 font-bold">MP4</span> the safest, most universal choice. Plays on
+              almost every phone, browser and platform.
+            </li>
+            <li>
+              <span className="text-violet-400 font-bold">WebM</span> smaller file size, built for fast-loading web
+              pages.
+            </li>
+            <li>
+              <span className="text-violet-400 font-bold">MOV</span> the native format for Apple devices and most
+              video editing apps.
+            </li>
+            <li>
+              <span className="text-violet-400 font-bold">MKV / AVI</span> flexible containers useful for older
+              players or archiving.
+            </li>
+            <li>
+              <span className="text-violet-400 font-bold">MP3 / M4A / OGG</span> best when you only need the audio,
+              like turning a video into a podcast-style file.
+            </li>
+            <li>
+              <span className="text-violet-400 font-bold">WAV / FLAC</span> lossless audio, ideal when quality
+              matters more than file size.
+            </li>
+          </ul>
+
+          <h3 className="text-sm font-bold text-white mb-2">Picking the right quality</h3>
+          <p className="text-xs leading-relaxed mb-4">
+            For sharing on social media or messaging apps, 720p is usually sharp enough and converts faster. Save
+            1080p for footage you plan to keep or re-upload elsewhere. On the audio side, 320kbps keeps music close
+            to the original quality, while 128kbps is plenty for voice notes or podcasts and produces a much smaller
+            file.
+          </p>
+
+          <p className="text-xs leading-relaxed text-slate-500">
+            Note: to keep conversions fast and reliable for everyone, videos are limited to 15 minutes in length and
+            up to 1080p quality.
+          </p>
+        </section>
+
+        {/* ❓ FAQ */}
+        <section className="mt-14 pt-10 border-t border-slate-900 mb-4">
+          <h2 className="text-lg font-black text-white mb-4 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-2">
+            {FAQ_ITEMS.map((item, i) => {
+              const isOpen = openFaq === i;
+              return (
+                <div key={i} className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : i)}
+                    className="w-full text-left px-4 py-3.5 flex items-center justify-between gap-3"
+                  >
+                    <h3 className="text-xs font-bold text-white">{item.q}</h3>
+                    <svg
+                      className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isOpen && (
+                    <p className="px-4 pb-3.5 text-[11px] text-slate-400 leading-relaxed">{item.a}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </main>
+
+      {/* সাইট নেভিগেশন পিল — উপরে Video Edits, নিচে Downloader + Converter */}
+<div className="flex flex-col items-center gap-2.5 py-6">
+  <Link
+    href="/editor"
+    className="px-5 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs"
+  >
+    Video Edits
+  </Link>
+  <div className="flex items-center gap-2.5">
+    <Link
+      href="/"
+      className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs"
+    >
+      Video Downloader
+    </Link>
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      className="px-4 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
+    >
+      Video Converter
+    </button>
+  </div>
+</div>
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
