@@ -119,6 +119,7 @@ const TAB_ICON = {
 export default function DownloaderApp() {
   const router = useRouter();
   const converterFileInputRef = useRef(null);
+  const editorFileInputRef = useRef(null);
   const [inputLinks, setInputLinks] = useState('');
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -545,6 +546,14 @@ export default function DownloaderApp() {
     if (!file) return;
     setPendingFile(file);
     router.push('/converter');
+  };
+
+  const handleEditorFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    setPendingFile(file);
+    router.push('/editor');
   };
 
   if (!isClient) return null;
@@ -1315,28 +1324,38 @@ export default function DownloaderApp() {
                 </div>
               </button>
 
-              {/* ✂️ Online video editing কার্ড — এখনো Coming soon, শুধু প্লেসহোল্ডার */}
-              <div
-                aria-disabled="true"
-                className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 opacity-60 cursor-not-allowed select-none"
-              >
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="6" cy="6" r="2.5" strokeWidth="2" />
-                      <circle cx="6" cy="18" r="2.5" strokeWidth="2" />
-                      <path strokeLinecap="round" strokeWidth="2" d="M20 6 8.5 12 20 18M8 12H4" />
-                    </svg>
-                  </div>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">SOON</span>
-                </div>
-                <p className="text-xs font-bold text-white mb-0.5">Online video editing</p>
-                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">Trim, crop and edit with AI</p>
-                <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-slate-500">Coming soon</span>
-                </div>
-              </div>
-            </div>
+              <button
+  type="button"
+  onClick={() => editorFileInputRef.current?.click()}
+  className="text-left bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 hover:border-sky-500/40 active:scale-[0.98] transition-all">
+
+  <input
+    ref={editorFileInputRef}
+    type="file"
+    accept="video/*"
+    className="hidden"
+    onChange={handleEditorFileChange}
+  />
+  <div className="flex items-center justify-between mb-2.5">
+    <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+      <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <circle cx="6" cy="6" r="2.5" strokeWidth="2" />
+        <circle cx="6" cy="18" r="2.5" strokeWidth="2" />
+        <path strokeLinecap="round" strokeWidth="2" d="M20 6 8.5 12 20 18M8 12H4" />
+      </svg>
+    </div>
+    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">NEW</span>
+  </div>
+  <p className="text-xs font-bold text-white mb-0.5">Online video editing</p>
+  <p className="text-[10px] text-slate-500 leading-relaxed mb-3">Trim, crop and edit with AI</p>
+  <div className="border border-dashed border-slate-800 rounded-lg py-2 flex items-center justify-center gap-1.5">
+    <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
+    </svg>
+    <span className="text-[10px] font-bold text-slate-400">Upload a file</span>
+  </div>
+</button>
+</div>
 
             <div className="flex items-center gap-2 mb-5">
               <div className="flex-1 h-px bg-slate-800"></div>
