@@ -1599,12 +1599,13 @@ export default function DownloaderApp() {
           Video Edits
         </Link>
         <div className="flex items-center gap-2.5">
-          <Link
-            href="/"
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="px-4 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
           >
             Video Downloader
-          </Link>
+          </button>
           <Link
             href="/converter"
             className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs font-bold hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
