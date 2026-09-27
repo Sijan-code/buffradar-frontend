@@ -49,11 +49,10 @@ function formatBytes(bytes) {
 export default function ConverterPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
-
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  const [format, setFormat] = useState('mp4');
-  const [quality, setQuality] = useState('1080p');
+  const [format, setFormat] = useState('m4');
+  const [quality, setQuality ] = useState('1080');
   const [bitrate, setBitrate] = useState('192kbps');
   const [converting, setConverting] = useState(false);
   const [progress, setProgress] = useState(null);
@@ -179,7 +178,7 @@ export default function ConverterPage() {
 
       <main className="max-w-xl w-full mx-auto px-4 py-8 flex-grow">
         <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">
+          <h1 className="text-2xl sm:text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
             Video Converter
           </h1>
           <p className="text-slate-400 text-xs">Upload a file, pick a format, and convert with AI-tuned quality.</p>
@@ -196,7 +195,7 @@ export default function ConverterPage() {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`cursor-pointer bg-slate-900/40 backdrop-blur-xl rounded-3xl border-2 border-dashed p-10 sm:p-14 text-center transition-all mb-6 ${
-              dragActive ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-800 hover:border-slate-700'
+              dragActive ? 'border-violet-500 bg-violet-500/5' : 'border-slate-800 hover:border-slate-700'
             }`}
           >
             <input
@@ -206,8 +205,8 @@ export default function ConverterPage() {
               className="hidden"
               onChange={handleBrowse}
             />
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-              <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 border border-violet-500/20 flex items-center justify-center">
+              <svg className="w-7 h-7 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v12m0-12 4 4m-4-4-4 4M4 20h16" />
               </svg>
             </div>
@@ -230,7 +229,7 @@ export default function ConverterPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 px-2 py-1 whitespace-nowrap"
+                className="text-[10px] font-bold text-violet-400 hover:text-violet-300 px-2 py-1 whitespace-nowrap"
               >
                 Change
               </button>
@@ -241,6 +240,23 @@ export default function ConverterPage() {
                 className="hidden"
                 onChange={handleBrowse}
               />
+            </div>
+
+            {/* 🔄 Format Converter প্রিভিউ স্ট্রিপ — হোমপেজের সাথে মিলিয়ে */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/80 p-2.5 flex gap-3 items-center mb-5">
+              <div className="w-16 h-16 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl border border-violet-500/20 shadow-lg shadow-violet-500/5">
+                🔄
+              </div>
+              <div className="truncate flex-1">
+                <p className="text-violet-400 font-bold uppercase text-[9px] tracking-wider">Format Converter</p>
+                <p className="text-white font-bold truncate mt-0.5">{file.name}</p>
+                <p className="text-slate-400 font-mono text-[10px] mt-0.5">
+                  Output: <span className="text-violet-400 font-bold">.{activeFormat.label}</span> | Quality:{' '}
+                  <span className="text-slate-200 font-bold">
+                    {activeFormat.kind === 'video' ? quality : activeFormat.lossless ? 'Lossless' : bitrate}
+                  </span>
+                </p>
+              </div>
             </div>
 
             {/* 🎯 ফরম্যাট বাছাই */}
@@ -255,7 +271,7 @@ export default function ConverterPage() {
                     onClick={() => setFormat(f.id)}
                     className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
                       active
-                        ? 'bg-emerald-500 border-emerald-400 text-slate-950'
+                        ? 'bg-violet-500 border-violet-400 text-slate-950 shadow-md shadow-violet-500/20'
                         : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-600'
                     }`}
                   >
@@ -278,7 +294,7 @@ export default function ConverterPage() {
                       onClick={() => setQuality(q.id)}
                       className={`px-2.5 py-1.5 rounded-full border text-[10px] font-bold transition-all ${
                         quality === q.id
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-400'
+                          ? 'bg-blue-500 text-slate-950 border-blue-400 shadow-md shadow-blue-500/20'
                           : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-600'
                       }`}
                     >
@@ -316,7 +332,7 @@ export default function ConverterPage() {
               <div className="mb-2">
                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
+                    className="h-full bg-violet-500 transition-all duration-300 rounded-full"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -329,9 +345,9 @@ export default function ConverterPage() {
                 type="button"
                 onClick={handleConvert}
                 disabled={converting}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 text-slate-950 font-black py-3 rounded-xl text-sm transition-all active:scale-[0.98] shadow-md shadow-emerald-500/10"
+                className="w-full bg-violet-500 hover:bg-violet-400 disabled:bg-violet-800 text-slate-950 font-black py-3 rounded-xl text-sm transition-all active:scale-[0.98] shadow-lg shadow-violet-500/20"
               >
-                Convert to {activeFormat.label}
+                🔄 Convert to {activeFormat.label}
               </button>
             )}
 
