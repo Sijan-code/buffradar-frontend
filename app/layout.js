@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react"; // এই লাইনটি যোগ করা হয়েছে
+import { Analytics } from "@vercel/analytics/next"; // এই লাইনটি যোগ করা হয়েছে
 import "./globals.css";
 
 const geistSans = Geist({
