@@ -706,7 +706,7 @@ export default function ManualEditor() {
     xhr.onerror = () => {
       clearInterval(fakeInterval);
       setProcessing(false);
-      fail('নেটওয়ার্ক সমস্যা, এডিট করা যায়নি।');
+      fail('সার্ভার সাড়া দেয়নি। ফ্রি সার্ভার ঘুমিয়ে থাকলে বা ভিডিও ভারী হলে এমন হয়। ১ মিনিট পরে আবার চেষ্টা করুন, নইলে Resize থেকে রেজোলিউশন কমিয়ে দেখুন।');
     };
     xhr.send(formData);
   };
