@@ -195,7 +195,7 @@ export default function TextToEditor() {
       }
       upd({ status: 'done', url, name: out.name, size: out.size, kind });
     } catch (e) {
-      const msg = e instanceof TypeError ? 'নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন।' : e.message || 'কিছু একটা সমস্যা হয়েছে।';
+      const msg = e instanceof TypeError ? 'সার্ভার সাড়া দেয়নি। ফ্রি সার্ভার ঘুমিয়ে থাকলে বা ভিডিও ভারী হলে এমন হয়। ১ মিনিট পরে আবার চেষ্টা করুন।' : e.message || 'কিছু একটা সমস্যা হয়েছে।';
       upd({ status: 'error', error: msg });
     } finally {
       setBusy(false);
