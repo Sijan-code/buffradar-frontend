@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next"; // এই লাইনটি যোগ করা হয়েছে
-import LimitModal from "./LimitModal";
+import limitModal from "./limitModal";
 import "./globals.css";
 
 const geistSans = Geist({
