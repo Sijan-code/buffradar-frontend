@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { takePendingFile } from '../converterStore';
 import Link from 'next/link';
 
+import { authHeaders } from '../supabaseClient';
+import { showLimit, readLimit } from '../limitBus';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 const CONVERT_FORMATS = [
@@ -166,10 +169,13 @@ export default function ConverterPage() {
 
       const response = await fetch(`${API_BASE}/api/convert-upload`, {
         method: 'POST',
+        headers: await authHeaders(),
         body: formData,
       });
 
       if (!response.ok) {
+        const lim = await readLimit(response);
+        if (lim) showLimit(lim);
         let msg = 'কনভার্ট করা যায়নি। আবার চেষ্টা করুন।';
         try {
           const err = await response.json();
