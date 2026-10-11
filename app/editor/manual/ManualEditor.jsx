@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { takePendingFile } from '../../converterStore';
 import { takePendingEditorFile } from '../../editorStore';
+import { getAccessToken } from '../../supabaseClient';
+import { showLimit } from '../../limitBus';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -600,7 +602,7 @@ export default function ManualEditor() {
     if (el && el.requestFullscreen) el.requestFullscreen();
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!file || processing) return;
     if (end > 0 && end <= start) {
       setNotice({ type: 'error', text: 'End time অবশ্যই Start time-এর চেয়ে বেশি হতে হবে।' });
@@ -653,8 +655,10 @@ export default function ManualEditor() {
       JSON.stringify(stickers.map((st) => ({ x: st.x, y: st.y, w: st.w, from: st.from || 0, to: st.to || 0 })))
     );
 
+    const token = await getAccessToken();
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${API_BASE}/api/edit-upload`);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     xhr.responseType = 'blob';
 
     xhr.upload.onprogress = (e) => {
@@ -676,7 +680,13 @@ export default function ManualEditor() {
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            fail(JSON.parse(reader.result).detail || 'এডিট করা যায়নি।');
+            const j = JSON.parse(reader.result);
+            if (j && j.error === 'limit') {
+              setProgress(null);
+              showLimit(j);
+              return;
+            }
+            fail(j.detail || 'এডিট করা যায়নি।');
           } catch (_) {
             fail('এডিট করা যায়নি।');
           }
