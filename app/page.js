@@ -1,15 +1,61 @@
 'use client';
 import QualitySelector from './QualitySelector';
-import { createClient } from '@supabase/supabase-js';
+import { supabase, authHeaders } from './supabaseClient';
+import { showLimit, readLimit } from './limitBus';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { setPendingFile } from './converterStore';
 
-const supabaseUrl = 'https://nvmqjwdkrvwcyjsqnfhh.supabase.co';
-const supabaseAnonKey = 'sb_publishable_bDpW8-uqBYl_MP02kdO2sg_KB3CAC5w';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 import React, { useState, useEffect, useRef } from 'react';
+
+const HOW_TO_CONTENT = {
+  video: {
+    title: "How to Download Videos with BuffRadar",
+    desc: "Free online video downloader for YouTube, Facebook, Instagram, TikTok, X, Vimeo and 1700+ sites — no software or extension required.",
+    steps: [
+      { step: '1', title: 'Paste your video link', desc: 'Copy the video URL from YouTube, Facebook, TikTok, Instagram or any of the 1700+ supported sites, then open BuffRadar.', img: '/images/step1.png' },
+      { step: '2', title: 'Fetch the video', desc: 'Paste the link into the box and tap Fetch. BuffRadar loads the video with its preview and details instantly.', img: '/images/step2.png' },
+      { step: '3', title: 'Choose quality & download', desc: 'Pick your preferred video resolution (up to 4K) or audio bitrate (up to 320kbps), then tap Process & Complete Download.', img: '/images/step3.png' }
+    ]
+  },
+  audio: {
+    title: "How to Download Audio with BuffRadar",
+    desc: "Extract high-quality MP3 audio from YouTube, Facebook, Instagram, TikTok and 1700+ sites without losing original quality.",
+    steps: [
+      { step: '1', title: 'Paste your media link', desc: 'Copy the video or audio URL from any supported platform and paste it in the search box.', img: '/images/audio-step1.png' },
+      { step: '2', title: 'Select Audio Bitrate', desc: 'Switch to the Audio tab and select your preferred bitrate quality (up to 320kbps).', img: '/images/audio-step2.png' },
+      { step: '3', title: 'Extract & Download MP3', desc: 'Tap Extract & Download MP3 Audio to quickly convert and save the pure audio file to your device.', img: '/images/audio-step3.png' }
+    ]
+  },
+  convert: {
+    title: "How to Convert Videos with BuffRadar",
+    desc: "Convert MP4, MOV, WebM, MKV and other media formats directly online without downloading software.",
+    steps: [
+      { step: '1', title: 'Upload or Paste Link', desc: 'Paste a video URL or upload a local file directly using the Video Converter tool.', img: '/images/convert-step1.png' },
+      { step: '2', title: 'Choose Output Format', desc: 'Select your target file format (MP4, WEBM, MKV, MP3, WAV) and target resolution.', img: '/images/convert-step2.png' },
+      { step: '3', title: 'Convert & Save File', desc: 'Click Convert & Download to let BuffRadar process and deliver your converted file in seconds.', img: '/images/convert-step3.png' }
+    ]
+  },
+  editor: {
+    title: "How to Edit Videos Online with BuffRadar",
+    desc: "Trim, crop, remove watermarks/objects, and compress videos directly in your browser with AI.",
+    steps: [
+      { step: '1', title: 'Select Editing Tool', desc: 'Choose Smart Trim & Crop, AI Object Remover, or Smart Compressor according to your need.', img: '/images/editor-step1.png' },
+      { step: '2', title: 'Adjust Parameters', desc: 'Set start/end time, target aspect ratio (9:16, 16:9), or select watermark position.', img: '/images/editor-step2.png' },
+      { step: '3', title: 'Apply & Export', desc: 'Tap Apply & Process to render your edited video, then download or share it directly.', img: '/images/editor-step3.png' }
+    ]
+  },
+  'deep insight': {
+    title: "How to Get Video Insights with BuffRadar",
+    desc: "Extract hidden tags, download original subtitles/captions, and check copyright safety status.",
+    steps: [
+      { step: '1', title: 'Fetch Public Video', desc: 'Paste any public video link from YouTube, Facebook, or TikTok to extract deep insights.', img: '/images/deep-step1.png' },
+      { step: '2', title: 'Check Copyright & Tags', desc: 'View the Safe to Repost indicator and copy viral tags or hashtags with a single click.', img: '/images/deep-step2.png' },
+      { step: '3', title: 'Download Subtitles & Thumbnails', desc: 'Export high-res thumbnails or download subtitle tracks in SRT, VTT, or TXT format.', img: '/images/deep-step3.png' }
+    ]
+  }
+};
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -149,6 +195,10 @@ export default function DownloaderApp() {
   const [deletingHistoryId, setDeletingHistoryId] = useState(null);
   const [clearingAllHistory, setClearingAllHistory] = useState(false);
 
+  // 🖼️📝 Deep Insight: থাম্বনেইল/সাবটাইটেল ডাউনলোডের স্টেট
+  const [subFormat, setSubFormat] = useState('srt'); // 'srt' | 'vtt' | 'txt'
+  const [savingKey, setSavingKey] = useState(null); // এখন কোন ডাউনলোড চলছে
+
   useEffect(() => {
   setIsClient(true);
   (async () => {
@@ -262,11 +312,19 @@ export default function DownloaderApp() {
     try {
         const response = await fetch(`${API_BASE}/api/extract`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ url: inputLinks })
         });
 
         const data = await response.json();
+
+        // ফ্রি সীমা শেষ হলে নকল "Emergency" ভিডিও না দেখিয়ে সাইন-আপের মোডাল দেখানো
+        if (response.status === 429 && data && data.error === 'limit') {
+            showLimit(data);
+            setLoading(false);
+            setStatusMsg("");
+            return;
+        }
 
         if (!response.ok) {
             console.log("Redirecting to Emergency Gateway...");
@@ -285,7 +343,9 @@ export default function DownloaderApp() {
                 tags: Array.isArray(data.tags) ? [...new Set(data.tags.filter(Boolean))] : [],
                 chapters: data.chapters || [{ start: "00:00", title: "Full Video" }],
                 copyrightStatus: data.copyright_status || "Safe",
-                thumbnail: data.thumbnail || ""
+                thumbnail: data.thumbnail || "",
+                thumbnails: Array.isArray(data.thumbnails) ? data.thumbnails : [],
+                subtitleTracks: Array.isArray(data.subtitle_tracks) ? data.subtitle_tracks : []
             });
             // Editor ট্যাবের স্টেট রিসেট, নতুন ভিডিওর দৈর্ঘ্য অনুযায়ী trim end বসানো
             setEditorTool(null);
@@ -336,6 +396,42 @@ export default function DownloaderApp() {
         setTrimEnd(0);
         setLoading(false);
         setStatusMsg("Notice: Secured via Emergency Gateway!");
+    }
+  };
+
+  // ফাইলের নামে নিষিদ্ধ ক্যারেক্টার বাদ দেওয়া
+  const safeFileName = (t) =>
+    (t || 'buffradar').replace(/[\\/:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'buffradar';
+
+  // থাম্বনেইল/সাবটাইটেল সার্ভার থেকে এনে সেভ করা। এরর হলে পেজ বদলায় না, শুধু মেসেজ দেখায়।
+  const saveFromApi = async (key, path, fileBase, ext) => {
+    if (savingKey) return;
+    setSavingKey(key);
+    try {
+      const res = await fetch(`${API_BASE}${path}`);
+      if (!res.ok) {
+        let msg = 'ডাউনলোড করা যায়নি।';
+        try {
+          const j = await res.json();
+          if (j && j.detail) msg = j.detail;
+        } catch (_) {}
+        alert(msg);
+        return;
+      }
+      const blob = await res.blob();
+      const typeExt = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' }[blob.type];
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = `${fileBase}.${ext || typeExt || 'jpg'}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 10000);
+    } catch (err) {
+      alert('সার্ভারের সাথে যোগাযোগ করা যায়নি।');
+    } finally {
+      setSavingKey(null);
     }
   };
 
@@ -416,8 +512,10 @@ export default function DownloaderApp() {
         });
       }, 500);
 
-      const response = await fetch(`${API_BASE}/api/convert?${params.toString()}`);
+      const response = await fetch(`${API_BASE}/api/convert?${params.toString()}`, { headers: await authHeaders() });
       if (!response.ok) {
+        const lim = await readLimit(response);
+        if (lim) showLimit(lim);
         let msg = "কনভার্ট করা যায়নি। আবার চেষ্টা করুন।";
         try {
           const err = await response.json();
@@ -483,8 +581,10 @@ export default function DownloaderApp() {
         });
       }, 500);
 
-      const response = await fetch(`${API_BASE}/api/edit?${params.toString()}`);
+      const response = await fetch(`${API_BASE}/api/edit?${params.toString()}`, { headers: await authHeaders() });
       if (!response.ok) {
+        const lim = await readLimit(response);
+        if (lim) showLimit(lim);
         let msg = "এডিট করা যায়নি। আবার চেষ্টা করুন।";
         try {
           const err = await response.json();
@@ -1127,6 +1227,112 @@ export default function DownloaderApp() {
                       </>
                     )}
                   </div>
+                  {/* 🖼️ থাম্বনেইল ডাউনলোড */}
+                  {(() => {
+                    const thumbs = processedVideo.thumbnails && processedVideo.thumbnails.length
+                      ? processedVideo.thumbnails
+                      : (processedVideo.thumbnail ? [{ url: processedVideo.thumbnail, width: null, height: null }] : []);
+                    return (
+                      <div>
+                        <p className="text-slate-400 font-bold mb-1">Thumbnail:</p>
+                        {thumbs.length === 0 ? (
+                          <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[10px] text-slate-500">
+                            এই ভিডিওর থাম্বনেইল পাওয়া যায়নি।
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            {thumbs.map((t, i) => {
+                              const key = `thumb-${i}`;
+                              const size = t.width && t.height ? `${t.width}x${t.height}` : 'original';
+                              return (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  disabled={!!savingKey}
+                                  onClick={() =>
+                                    saveFromApi(
+                                      key,
+                                      `/api/thumbnail?url=${encodeURIComponent(t.url)}`,
+                                      `${safeFileName(processedVideo.title)}-thumbnail-${size}`
+                                    )
+                                  }
+                                  className="py-2 rounded-lg border border-slate-700 bg-slate-800 text-emerald-400 font-bold text-[10px] disabled:opacity-40"
+                                >
+                                  {savingKey === key ? 'Saving…' : `Download ${t.width && t.height ? `${t.width}×${t.height}` : 'Original'}`}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 📝 সাবটাইটেল ডাউনলোড */}
+                  {(() => {
+                    const tracks = processedVideo.subtitleTracks || [];
+                    return (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-slate-400 font-bold">Subtitles ({tracks.length}):</p>
+                          <div className="flex gap-1">
+                            {['srt', 'vtt', 'txt'].map((f) => (
+                              <button
+                                key={f}
+                                type="button"
+                                aria-pressed={subFormat === f}
+                                onClick={() => setSubFormat(f)}
+                                className={`px-2.5 py-1 rounded-full border text-[10px] transition-all ${
+                                  subFormat === f
+                                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold'
+                                    : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+                                }`}
+                              >
+                                {f.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {tracks.length === 0 ? (
+                          <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[10px] text-slate-500">
+                            এই ভিডিওতে কোনো সাবটাইটেল পাওয়া যায়নি।
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950 border border-slate-800 rounded-xl max-h-56 overflow-y-auto">
+                              {tracks.map((tr) => {
+                                const key = `sub-${tr.auto ? 'a' : 'm'}-${tr.lang}`;
+                                return (
+                                  <button
+                                    key={key}
+                                    type="button"
+                                    disabled={!!savingKey}
+                                    onClick={() =>
+                                      saveFromApi(
+                                        key,
+                                        `/api/subtitles?url=${encodeURIComponent(processedVideo.sourceUrl)}&lang=${encodeURIComponent(tr.lang)}&fmt=${subFormat}&auto=${tr.auto ? 'true' : 'false'}`,
+                                        `${safeFileName(processedVideo.title)}.${tr.lang}`,
+                                        subFormat
+                                      )
+                                    }
+                                    className="px-2.5 py-1 rounded-full border border-slate-800 bg-slate-900 text-slate-300 text-[10px] hover:border-emerald-500/50 hover:text-emerald-400 disabled:opacity-40 transition-all"
+                                  >
+                                    {savingKey === key ? 'Saving…' : tr.name}
+                                    {tr.auto && savingKey !== key && <span className="ml-1 text-slate-500">auto</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <p className="mt-1.5 text-[10px] text-slate-500 leading-relaxed">
+                              "auto" মানে ভিডিওর অটো-জেনারেটেড ক্যাপশন, কিছু ভুল থাকতে পারে।
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                 </div>
               );
             })()}
@@ -1401,88 +1607,73 @@ export default function DownloaderApp() {
 
 
         
-          <section className="w-full mt-1" aria-labelledby="how-to-use-heading">
-            {/* বড় টাইটেল */}
-            <div className="text-center mb-8 px-2">
-              <h2 id="how-to-use-heading" className="text-2xl sm:text-3xl font-black text-white mb-2.5 leading-tight">
-                How to Download Videos with <span className="text-emerald-400">BuffRadar</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-                Free online video downloader for YouTube, Facebook, Instagram, TikTok, X, Vimeo and 1700+ sites — no software or extension required.
-              </p>
-            </div>
-
-            {/* ধাপে ধাপে — zigzag লেআউট, ব্রাউজার মকআপ ফ্রেম সহ */}
-            <div className="max-w-4xl mx-auto space-y-6 sm:space-y-10">
-              {[
-                {
-                  step: '1',
-                  title: 'Paste your video link',
-                  desc: 'Copy the video URL from YouTube, Facebook, TikTok, Instagram or any of the 1700+ supported sites, then open BuffRadar.',
-                  img: '/images/step1.png',
-                },
-                {
-                  step: '2',
-                  title: 'Fetch the video',
-                  desc: 'Paste the link into the box and tap Fetch. BuffRadar loads the video with its preview and details instantly.',
-                  img: '/images/step2.png',
-                },
-                {
-                  step: '3',
-                  title: 'Choose quality & download',
-                  desc: 'Pick your preferred video resolution (up to 4K) or audio bitrate (up to 320kbps), then tap Process & Complete Download.',
-                  img: '/images/step3.png',
-                },
-              ].map((s, i) => (
-                <div
-                  key={s.step}
-                  className={`flex flex-col sm:flex-row ${
-                    i % 2 === 1 ? 'sm:flex-row-reverse' : ''
-                  } items-center gap-6 sm:gap-10 bg-slate-900/40 rounded-3xl p-5 sm:p-7 shadow-xl shadow-black/30 hover:bg-slate-900/60 transition-all`}
-                >
-                  {/* টেক্সট */}
-                  <div className="flex-1 w-full">
-                    <div className="flex items-center gap-3 mb-2.5">
-                      <span className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 text-sm font-black flex items-center justify-center shadow-lg shadow-emerald-500/40">
-                        {s.step}
-                      </span>
-                      <h3 className="text-base sm:text-xl font-bold text-white leading-snug">{s.title}</h3>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{s.desc}</p>
-                  </div>
-
-                  {/* ছবি — মিনি ব্রাউজার ফ্রেম + গ্লো */}
-                  <div className="flex-1 w-full relative">
-                    <div className="absolute -inset-3 bg-emerald-500/10 blur-2xl rounded-3xl" />
-                    <div className="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
-                      <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border-b border-slate-800">
-                        <span className="w-2 h-2 rounded-full bg-red-500/70" />
-                        <span className="w-2 h-2 rounded-full bg-yellow-500/70" />
-                        <span className="w-2 h-2 rounded-full bg-green-500/70" />
-                      </div>
-                      <img src={s.img} alt={s.title} className="w-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-
+          {/* 📖 ডাইনামিক How To Use সেকশন (অরিজিনাল ডিজাইন অপরিবর্তিত) */}
+          {(() => {
+            const currentHowTo = HOW_TO_CONTENT[activeTab] || HOW_TO_CONTENT.video;
             
+            return (
+              <section className="w-full mt-1" aria-labelledby="how-to-use-heading">
+                {/* বড় টাইটেল */}
+                <div className="text-center mb-8 px-2">
+                  <h2 id="how-to-use-heading" className="text-2xl sm:text-3xl font-black text-white mb-2.5 leading-tight">
+                    {currentHowTo.title.split("BuffRadar")[0]} <span className="text-emerald-400">BuffRadar</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                    {currentHowTo.desc}
+                  </p>
+                </div>
 
-            {/* কেন BuffRadar */}
-            <div className="mt-5 bg-slate-900/30 border border-slate-800 rounded-2xl p-4">
-              <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Why choose BuffRadar</h3>
-              <ul className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-400">
-                <li>✅ No app or extension needed</li>
-                <li>✅ Supports 1700+ sites</li>
-                <li>✅ Up to 4K video quality</li>
-                <li>✅ MP3 / audio extraction</li>
-                <li>✅ 100% free &amp; unlimited</li>
-                <li>✅ Works on mobile &amp; desktop</li>
-              </ul>
-            </div>
-          </section>
+                {/* ধাপে ধাপে — zigzag লেআউট, ব্রাউজার মকআপ ফ্রেম সহ */}
+                <div className="max-w-4xl mx-auto space-y-6 sm:space-y-10">
+                  {currentHowTo.steps.map((s, i) => (
+                    <div
+                      key={s.step}
+                      className={`flex flex-col sm:flex-row ${
+                        i % 2 === 1 ? 'sm:flex-row-reverse' : ''
+                      } items-center gap-6 sm:gap-10 bg-slate-900/40 rounded-3xl p-5 sm:p-7 shadow-xl shadow-black/30 hover:bg-slate-900/60 transition-all`}
+                    >
+                      {/* টেক্সট */}
+                      <div className="flex-1 w-full">
+                        <div className="flex items-center gap-3 mb-2.5">
+                          <span className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 text-sm font-black flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                            {s.step}
+                          </span>
+                          <h3 className="text-base sm:text-xl font-bold text-white leading-snug">{s.title}</h3>
+                        </div>
+                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+                      </div>
+
+                      {/* ছবি — মিনি ব্রাউজার ফ্রেম + গ্লো */}
+                      <div className="flex-1 w-full relative">
+                        <div className="absolute -inset-3 bg-emerald-500/10 blur-2xl rounded-3xl" />
+                        <div className="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+                          <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border-b border-slate-800">
+                            <span className="w-2 h-2 rounded-full bg-red-500/70" />
+                            <span className="w-2 h-2 rounded-full bg-yellow-500/70" />
+                            <span className="w-2 h-2 rounded-full bg-green-500/70" />
+                          </div>
+                          <img src={s.img} alt={s.title} className="w-full object-cover" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* কেন BuffRadar */}
+                <div className="mt-5 bg-slate-900/30 border border-slate-800 rounded-2xl p-4">
+                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Why choose BuffRadar</h3>
+                  <ul className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-400">
+                    <li>✅ No app or extension needed</li>
+                    <li>✅ Supports 1700+ sites</li>
+                    <li>✅ Up to 4K video quality</li>
+                    <li>✅ MP3 / audio extraction</li>
+                    <li>✅ 100% free &amp; unlimited</li>
+                    <li>✅ Works on mobile &amp; desktop</li>
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
       
       {/* প্রবন্ধ অংশ — SEO-এর জন্য প্রাকৃতিক ভাষায় লেখা */}
             <div className="mt-6 bg-slate-900/20 border border-slate-800 rounded-2xl p-4 sm:p-6">
@@ -1686,5 +1877,3 @@ export default function DownloaderApp() {
   </div>
 );
 }
-
-      
