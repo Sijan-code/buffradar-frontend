@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
       >
         <div className="min-h-full flex flex-col">
           {children}
-          <LimitModal />
+          <limitModal />
         </div>
         <Analytics /> {/* এই লাইনটি যোগ করা হয়েছে */}
       </body>
