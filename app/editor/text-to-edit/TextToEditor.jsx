@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { takePendingEditorFile } from '../../editorStore';
+import { authHeaders } from '../../supabaseClient';
+import { showLimit } from '../../limitBus';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -152,10 +154,15 @@ export default function TextToEditor() {
       // ধাপ ১: AI লেখাটা বুঝে সেটিংস বানায়
       const pr = await fetch(`${API_BASE}/api/ai-edit-plan`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ prompt, duration: cur.duration, width: cur.w, height: cur.h }),
       });
       const pj = await pr.json().catch(() => ({}));
+      if (pr.status === 429 && pj.error === 'limit') {
+        showLimit(pj);
+        upd({ status: 'info', note: pj.detail });
+        return;
+      }
       if (!pr.ok) throw new Error(pj.detail || 'AI এখন কাজ করছে না।');
       if (!pj.changed) {
         upd({
@@ -175,9 +182,11 @@ export default function TextToEditor() {
       fd.append('reverse', p.reverse ? 'true' : 'false');
       fd.append('text_bg', p.text_bg ? 'true' : 'false');
       fd.append('cuts', JSON.stringify(p.cuts || []));
-      const er = await fetch(`${API_BASE}/api/edit-upload`, { method: 'POST', body: fd });
+      fd.append('ai_ticket', pj.ticket || '');
+      const er = await fetch(`${API_BASE}/api/edit-upload`, { method: 'POST', headers: await authHeaders(), body: fd });
       if (!er.ok) {
         const ej = await er.json().catch(() => ({}));
+        if (ej.error === 'limit') showLimit(ej);
         throw new Error(ej.detail || 'এডিট করা যায়নি।');
       }
       const blob = await er.blob();
