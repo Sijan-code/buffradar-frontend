@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next"; // এই লাইনটি যোগ করা হয়েছে
-import limitModal from "./limitModal";
+import limitModal from "./LimitModal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
       >
         <div className="min-h-full flex flex-col">
           {children}
-          <limitModal />
+          <LimitModal />
         </div>
         <Analytics /> {/* এই লাইনটি যোগ করা হয়েছে */}
       </body>
