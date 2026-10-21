@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Advertisement</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; }
+    body { display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+
+  <script>
+  atOptions = {
+    'key' : 'a77a9742ee97d97f2e92b0a32647505b',
+    'format' : 'iframe',
+    'height' : 250,
+    'width' : 300,
+    'params' : {}
+  };
+</script>
+<script src="https://bellnewyork.org/22/a77a9742ee97d97f2e92b0a32647505b"></script>
+
+  <script>
+    (function () {
+      var sent = false, n = 0;
+      function rendered() {
+        var els = document.querySelectorAll('iframe, img, ins, canvas, video, a');
+        for (var i = 0; i < els.length; i++) {
+          if (els[i].offsetWidth > 50 && els[i].offsetHeight > 30) return true;
+        }
+        return false;
+      }
+      var id = setInterval(function () {
+        n++;
+        if (!sent && rendered()) {
+          sent = true;
+          try { parent.postMessage({ type: 'bf-ad-rendered' }, '*'); } catch (e) {}
+        }
+        if (sent || n > 60) clearInterval(id);
+      }, 250);
+    })();
+  </script>
+</body>
+</html>
