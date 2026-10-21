@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { supabase, authHeaders } from './supabaseClient';
 import { onLimit } from './limitBus';
 import AdBox from './AdBox';
-import { AD_BANNER_HTML } from './adConfig';
+import { AD_FRAME_URL } from './adConfig';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 // পরীক্ষার জন্য: Vercel-এ NEXT_PUBLIC_ADS_TEST=1 দিলে আসল বিজ্ঞাপন ছাড়াই অপেক্ষা-পর্দা চলে। আসল সাইটে চালু রাখবেন না।
@@ -158,7 +158,14 @@ export default function LimitModal() {
   const reset = info ? formatReset(info.reset_at) : '';
   const adCredits = (usage && usage.ad_credits) || 3;
   const refCredits = (usage && usage.referral_credits) || 5;
-  const adsReady = !!(usage && usage.ads && (AD_BANNER_HTML.trim() || ADS_TEST));
+  const adsReady = !!(usage && usage.ads && (AD_FRAME_URL || ADS_TEST));
+
+  // বিজ্ঞাপন সত্যিই দেখা না গেলে (ব্লকার, নেটওয়ার্ক থেকে বিজ্ঞাপন না আসা) ক্রেডিট দেওয়া হয় না
+  const adFailed = () => {
+    adRef.current = null;
+    setErr('বিজ্ঞাপন লোড হয়নি। বিজ্ঞাপন-ব্লকার বন্ধ করে বা অন্য ব্রাউজারে আবার চেষ্টা করুন।');
+    setView('main');
+  };
 
   const signUp = async () => {
     setBusy(true);
@@ -259,8 +266,8 @@ export default function LimitModal() {
               <>
                 <h2 className="text-lg font-black mb-1">বিজ্ঞাপন চলছে</h2>
                 <p className="text-[11px] text-slate-500 mb-4">বিজ্ঞাপনে ক্লিক করতে হবে না। অপেক্ষা শেষ হলে ক্রেডিট যোগ হবে।</p>
-                {AD_BANNER_HTML.trim() ? (
-                  <AdBox html={AD_BANNER_HTML} onLoaded={() => setAdLoaded(true)} />
+                {AD_FRAME_URL ? (
+                  <AdBox src={AD_FRAME_URL} onLoaded={() => setAdLoaded(true)} onFailed={adFailed} />
                 ) : (
                   <div className="mx-auto flex h-[250px] w-[300px] items-center justify-center rounded-xl border border-dashed border-slate-700 text-xs text-slate-500">
                     বিজ্ঞাপন (টেস্ট)
