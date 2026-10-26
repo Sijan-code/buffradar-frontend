@@ -17,6 +17,8 @@ const KIND_LABEL = {
   edit_ai: 'AI এডিটে (Text to edit)',
 };
 
+const KIND_NAME = { download: 'ডাউনলোড', convert: 'কনভার্ট', edit_manual: 'ম্যানুয়াল এডিট', edit_ai: 'AI এডিট' };
+
 const bn = (n) => String(n ?? '').replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[d]);
 
 function formatReset(iso) {
@@ -155,6 +157,7 @@ export default function LimitModal() {
   }, []);
 
   const guest = info ? info.tier !== 'member' : true;
+  const costs = (usage && usage.costs) || (info && info.costs) || null;
   const reset = info ? formatReset(info.reset_at) : '';
   const adCredits = (usage && usage.ad_credits) || 3;
   const refCredits = (usage && usage.referral_credits) || 5;
@@ -294,16 +297,31 @@ export default function LimitModal() {
 
             {view === 'main' && (
               <>
-                <h2 className="text-lg font-black mb-1">{guest ? 'আপনার ফ্রি ক্রেডিট শেষ' : 'আপনার ক্রেডিট শেষ'}</h2>
+                <h2 className="text-lg font-black mb-1">{info.mode === 'badge' ? 'আপনার ক্রেডিট' : guest ? 'আপনার ফ্রি ক্রেডিট শেষ' : 'আপনার ক্রেডিট শেষ'}</h2>
                 <p className="text-[11px] text-slate-500 mb-4">
-                  {KIND_LABEL[info.kind] || 'এই কাজে'} {bn(info.cost)} ক্রেডিট লাগে। আপনার আছে {bn(info.balance)}/{bn(info.budget)}।
+                  {info.mode === 'badge'
+                    ? `আপনার আছে ${bn(info.balance)}/${bn(info.budget)} ক্রেডিট (২৪ ঘণ্টায়)।`
+                    : `${KIND_LABEL[info.kind] || 'এই কাজে'} ${bn(info.cost)} ক্রেডিট লাগে। আপনার আছে ${bn(info.balance)}/${bn(info.budget)}।`}
                 </p>
+
+                {info.mode === 'badge' && costs && (
+                  <div className="grid grid-cols-2 gap-2 mb-4 text-[11px]">
+                    {Object.keys(KIND_NAME).map((k) => (
+                      <div key={k} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/50 px-3 py-2">
+                        <span className="text-slate-400">{KIND_NAME[k]}</span>
+                        <span className="font-bold text-emerald-300">{bn(costs[k])}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <p className="text-sm text-slate-300 leading-relaxed mb-4">
                   {guest
                     ? info.network
                       ? 'এই ইন্টারনেট সংযোগ থেকে অনেক ব্যবহার হয়েছে। Google দিয়ে সাইন-আপ করলে আপনার নিজের ক্রেডিট পাবেন।'
                       : `Google দিয়ে সাইন-আপ করে ৩ গুণ ক্রেডিট (${bn((info.budget || 8) * 3)}) পান।`
+                    : info.mode === 'badge'
+                    ? 'ক্রেডিট কমলে বিজ্ঞাপন দেখে, বন্ধুকে আমন্ত্রণ করে বা Premium নিয়ে বাড়াতে পারেন।'
                     : 'কাজ চালিয়ে যেতে বিজ্ঞাপন দেখে ক্রেডিট নিন, বন্ধুকে আমন্ত্রণ করুন, অথবা Premium নিন।'}
                   {reset && <span className="block text-xs text-slate-500 mt-2">কিছু ক্রেডিট ফিরবে: {reset}</span>}
                 </p>
