@@ -1,6 +1,8 @@
 'use client';
 import QualitySelector from './QualitySelector';
-import { supabase, authHeaders } from './supabaseClient';
+import { supabase, authHeaders, getAccessToken } from './supabaseClient';
+import CreditBadge from './CreditBadge';
+import { openCreditsPanel } from './creditsPanel';
 import { showLimit, readLimit } from './limitBus';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -201,13 +203,7 @@ export default function DownloaderApp() {
 
   useEffect(() => {
   setIsClient(true);
-  (async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) console.error('Anonymous sign-in failed:', error.message);
-    }
-  })();
+  getAccessToken();
 }, []);
 
   const ensureFreshSession = async () => {
@@ -768,16 +764,10 @@ export default function DownloaderApp() {
       )}
 
       {/* ডানপাশের বাটনগুলোর জন্য একটি ফ্লেক্স কন্টেইনার */}
-      <div className="flex items-center gap-4 relative z-10">
+      <div className="flex items-center gap-2 relative z-10">
         {!isDownloading ? (
           <>
-            {/* ✨ GO PREMIUM BUTTON */}
-            <a
-              href="/premium"
-              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold px-4 py-1.5 rounded-full text-sm shadow-md shadow-pink-500/30 hover:shadow-pink-500/50 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
-            >
-              <span className="text-yellow-300 animate-pulse text-xs">✦</span> Go Premium
-            </a>
+            <CreditBadge />
 
             {/* 🍔 হ্যামবার্গার/থ্রি-ডট মেনু বাটন */}
             <div className="relative">
@@ -791,8 +781,8 @@ export default function DownloaderApp() {
               </button>
 
               {/* 📋 মেনু ড্রপডাউন বক্স */}
-              {menuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-50">
+                            {menuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-50">
                   <button
                     type="button"
                     onClick={async (e) => {
@@ -809,6 +799,36 @@ export default function DownloaderApp() {
 
                   <button
                     type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openCreditsPanel();
+                    }}
+                    className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800"
+                  >
+                    ⚡ আমার ক্রেডিট
+                  </button>
+
+                  <hr className="border-t border-slate-800" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openCreditsPanel();
+                    }}
+                    className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800"
+                  >
+                    🎁 বন্ধুকে আমন্ত্রণ করুন
+                  </button>
+
+                  <hr className="border-t border-slate-800" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      router.push('/premium');
+                    }}
                     className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800 rounded-b-lg"
                   >
                     ⭐ Go Premium
