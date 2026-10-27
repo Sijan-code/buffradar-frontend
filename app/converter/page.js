@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import ToolCards from '../ToolCards';
 import { useRouter } from 'next/navigation';
 import { takePendingFile } from '../converterStore';
 import Link from 'next/link';
@@ -554,30 +555,7 @@ export default function ConverterPage() {
         </section>
       </main>
 
-      {/* সাইট নেভিগেশন পিল — উপরে Video Edits, নিচে Downloader + Converter */}
-<div className="flex flex-col items-center gap-2.5 py-6">
-  <Link
-    href="/editor"
-    className="px-5 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs"
-  >
-    Video Edits
-  </Link>
-  <div className="flex items-center gap-2.5">
-    <Link
-      href="/"
-      className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs"
-    >
-      Video Downloader
-    </Link>
-    <button
-      type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="px-4 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
-    >
-      Video Converter
-    </button>
-  </div>
-</div>
+      <ToolCards exclude={['converter']} />
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
