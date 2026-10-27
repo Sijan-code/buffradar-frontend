@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import ToolCards from '../ToolCards';
 import { useRouter } from 'next/navigation';
 import { takePendingFile } from '../converterStore';
 import { setPendingEditorFile } from '../editorStore';
@@ -482,44 +483,9 @@ export default function EditorPage() {
             })}
           </div>
         </section>
-
-        {/* ৫) অন্য টুল */}
-        <section aria-labelledby="other-tools" className="border-t border-slate-900 pt-10">
-          <h2 id="other-tools" className="text-xl sm:text-2xl font-black text-white mb-5">
-            More BuffRadar Tools
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-3">
-            {ARTICLE.tools.map((t) => (
-              <Link
-                key={t.href}
-                href={t.href}
-                className="rounded-2xl border border-slate-800 bg-slate-900/40 hover:border-sky-500/50 p-4 transition-colors"
-              >
-                <p className="text-sm font-black text-white mb-1">{t.title}</p>
-                <p className="text-xs text-slate-400 leading-relaxed">{t.text}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
       </article>
 
-      <div className="flex flex-col items-center gap-2.5 py-6">
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="px-5 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
-        >
-          Video Edits
-        </button>
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs">
-            Video Downloader
-          </Link>
-          <Link href="/converter" className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs">
-            Video Converter
-          </Link>
-        </div>
-      </div>
+        <ToolCards exclude={['editor']} />
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
