@@ -2,6 +2,7 @@
 import QualitySelector from './QualitySelector';
 import { supabase, authHeaders, getAccessToken } from './supabaseClient';
 import CreditBadge from './CreditBadge';
+import ToolCards from './ToolCards';
 import { openCreditsPanel } from './creditsPanel';
 import { showLimit, readLimit } from './limitBus';
 import { useRouter } from 'next/navigation';
@@ -1801,30 +1802,7 @@ export default function DownloaderApp() {
  
       </main>
 
-      {/* সাইট নেভিগেশন পিল — উপরে Video Edits, নিচে Downloader + Converter */}
-      <div className="flex flex-col items-center gap-2.5 py-6">
-        <Link
-          href="/editor"
-          className="px-5 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs font-bold hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
-        >
-          Video Edits
-        </Link>
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="px-4 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-[11px] sm:text-xs font-bold"
-          >
-            Video Downloader
-          </button>
-          <Link
-            href="/converter"
-            className="px-4 py-1.5 rounded-full border border-slate-700 text-slate-300 text-[11px] sm:text-xs font-bold hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
-          >
-            Video Converter
-          </Link>
-        </div>
-      </div>
+      <ToolCards exclude={['downloader']} />
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
         <p>&copy; 2026 buffradar.com</p>
