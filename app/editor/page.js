@@ -38,52 +38,124 @@ function fileExt(f) {
 // ============================================================
 const ARTICLE = {
   summary: {
-    title: 'How to Edit a Video Online with BuffRadar',
-    intro: '[আপনার লেখা: ২-৩ লাইনের সারাংশ]',
+    title: "How to Edit a Video Online with BuffRadar",
+    intro:
+      "BuffRadar is a free-to-start online video editor that runs in your browser on any phone, tablet or computer. Upload a clip, then edit it by hand with a visual timeline or simply type what you want, and download the result as an MP4, a GIF or an MP3. There is nothing to install, and your exported videos carry no watermark.",
     cards: [
-      { title: 'Basic edits', text: '[এক লাইন]', target: 'manually' },
-      { title: 'Manually', text: '[এক লাইন]', target: 'manually' },
-      { title: 'Text to edit', text: '[এক লাইন]', target: 'text-to-edit' },
+      { title: "Basic edits", text: "Trim, cut, crop, rotate and change the speed of any clip.", target: "manually" },
+      { title: "Manually", text: "A phone-style timeline with filters, text, music and stickers.", target: "manually" },
+      { title: "Text to edit", text: "Describe the edit in plain English and AI sets it up for you.", target: "text-to-edit" },
     ],
   },
   manual: {
-    id: 'manually',
-    title: 'Edit Videos Manually: Trim, Crop, Speed & Text',
-    image: '',
-    imageAlt: '',
-    intro: '[আপনার লেখা: Manually edits-এর পরিচয়]',
+    id: "manually",
+    title: "Edit Videos Manually: Trim, Crop, Speed & Text",
+    image: "",
+    imageAlt: "BuffRadar manual video editor with preview, timeline and tool bar",
+    intro:
+      "The manual editor works like a simple video app on your phone. Your clip plays in a live preview with a frame-by-frame timeline underneath and a tool bar at the bottom. Drag the blue handles to trim, tap a tool to change a setting, and check the result in the preview before you export. Every change can be undone and redone, so you can experiment freely.",
     features: [
-      { title: 'Trim', text: '[এক লাইন]' },
-      { title: 'Crop and resize', text: '[এক লাইন]' },
-      { title: 'Speed', text: '[এক লাইন]' },
-      { title: 'Audio', text: '[এক লাইন]' },
-      { title: 'Text', text: '[এক লাইন]' },
+      {
+        title: "Trim & Cut",
+        text: "Drag the handles to keep only the part you want, or cut a section out of the middle and the rest joins up automatically.",
+      },
+      {
+        title: "Crop & Resize",
+        text: "Switch to 9:16, 1:1 or 16:9 for Reels, Shorts, TikTok and YouTube. Fill the frame by cropping, or keep the whole video on a blurred background. Rotate, flip, and export at 1080p, 720p, 480p or 360p.",
+      },
+      {
+        title: "Speed & Reverse",
+        text: "Play from 0.5x slow motion up to 2x fast forward, or play a short clip backwards.",
+      },
+      {
+        title: "Audio & Music",
+        text: "Mute the original sound, set the volume anywhere from 0 to 200%, or add your own audio file as background music and loop it to fill the video.",
+      },
+      {
+        title: "Text & Stickers",
+        text: "Add a caption with your choice of size, colour, position and background box, plus emoji or your own image as stickers. Choose exactly when each one appears.",
+      },
+      {
+        title: "Filters & Effects",
+        text: "Black and white, warm, cool, vintage and vivid looks, brightness, contrast and saturation sliders, plus blur, sharpen, vignette and grain.",
+      },
+      {
+        title: "Fade & Cover",
+        text: "Fade the picture and sound in and out, and save any frame of your video as a JPG cover image.",
+      },
+      {
+        title: "Export as MP4, GIF or MP3",
+        text: "Download a standard MP4, a GIF of up to 30 seconds, or just the audio as an MP3.",
+      },
     ],
-    stepsTitle: 'How to edit manually',
-    steps: ['[ধাপ ১]', '[ধাপ ২]', '[ধাপ ৩]'],
+    stepsTitle: "How to edit a video manually",
+    steps: [
+      "Upload your video on this page. MP4, MOV, WebM, MKV and most other common video formats work.",
+      "Select Manually and tap Let's go to open the editor.",
+      "Drag the blue handles on the timeline to trim, then open the tools at the bottom: Cut, Resize, Speed, Filter, Effect, Fade, Audio, Music, Text and Sticker.",
+      "Press play to check the result in the preview. Use Undo or Redo if you change your mind.",
+      "Open Export, choose MP4, GIF or MP3, and tap Export to download your finished file.",
+    ],
   },
   ai: {
-    id: 'text-to-edit',
-    title: 'Edit Videos with AI: Just Type What You Want',
-    image: '',
-    imageAlt: '',
-    intro: '[আপনার লেখা: Text to edit-এর পরিচয়]',
-    examples: ['Cut the first 5 seconds', 'Make it 9:16', 'Speed up 2x', 'Add the text "Hello" at the bottom'],
-    stepsTitle: 'How to edit with a text prompt',
-    steps: ['[ধাপ ১]', '[ধাপ ২]', '[ধাপ ৩]'],
+    id: "text-to-edit",
+    title: "Edit Videos with AI: Just Type What You Want",
+    image: "",
+    imageAlt: "BuffRadar Text to edit: describe your video edit and AI applies it",
+    intro:
+      "Don't want to fiddle with a timeline? Text to edit lets you describe the change in your own words. The AI turns your sentence into the right editing settings, applies them to your video and shows the result with a download button. It can trim and cut, crop to vertical or square, change speed, rotate, flip or reverse, mute or adjust the volume, add captions, apply filters and effects, add fades, and export a GIF or MP3. You can keep adding instructions, and each new request builds on the previous result. Adding music or stickers is done in the manual editor.",
+    examples: [
+      "Cut the first 5 seconds",
+      "Make it vertical 9:16 with a blurred background",
+      "Speed up 2x and add a fade out",
+      "Add the text “Summer 2026” at the top in yellow",
+      "Turn it black and white",
+      "Convert this clip to a GIF",
+    ],
+    stepsTitle: "How to edit with a text prompt",
+    steps: [
+      "Upload your video, select Text to edit, and tap Let's go.",
+      "Type what you want, for example: “Remove the first 3 seconds and make it 9:16”.",
+      "Wait a few seconds while the AI sets up the edit and your video is processed.",
+      "Preview the result, download it, or type another instruction to refine it further.",
+    ],
   },
   faq: [
-    { q: '[প্রশ্ন ১]', a: '[উত্তর ১]' },
-    { q: '[প্রশ্ন ২]', a: '[উত্তর ২]' },
-    { q: '[প্রশ্ন ৩]', a: '[উত্তর ৩]' },
-    { q: '[প্রশ্ন ৪]', a: '[উত্তর ৪]' },
-  ],
-  tools: [
-    { href: '/', title: 'Video Downloader', text: '[এক লাইন]' },
-    { href: '/converter', title: 'Video Converter', text: '[এক লাইন]' },
-    { href: '/youtube-to-mp3', title: 'YouTube to MP3', text: '[এক লাইন]' },
+    {
+      q: "Is the BuffRadar video editor free?",
+      a: "You can start for free. Every visitor gets daily credits to use the downloader, converter and editor, and signing in with Google gives you more. You can also earn extra credits by inviting a friend. Exported videos have no watermark.",
+    },
+    {
+      q: "Do I need to install anything or create an account?",
+      a: "No installation is needed. The editor runs in your browser on phones, tablets and computers. You can try it without an account, and signing in with Google is only needed if you want a larger daily allowance.",
+    },
+    {
+      q: "Which video formats can I upload?",
+      a: "Most common formats work, including MP4, MOV, WebM and MKV. Your finished video is exported as an MP4, and you can also export a GIF or an MP3.",
+    },
+    {
+      q: "What can the AI (Text to edit) do?",
+      a: "It can trim and cut, crop to 9:16, 1:1 or 16:9, change speed, rotate, flip or reverse, mute or change the volume, add text, apply filters and effects, add fades, and export as a GIF or MP3. Adding music or stickers, adding subtitles and joining several clips are not part of Text to edit. Use the manual editor for music and stickers.",
+    },
+    {
+      q: "Can I edit a video for Instagram Reels, TikTok or YouTube Shorts?",
+      a: "Yes. Choose the 9:16 aspect ratio to make a vertical video. You can either crop the frame to fill the screen or keep the whole video on a blurred background, then add text and trim it to the length you want.",
+    },
+    {
+      q: "Can I add music or text to my video?",
+      a: "Yes. In the manual editor you can add a caption with your own size, colour and position, choose when it appears, and upload your own audio file as background music. Please only use music you have the right to use.",
+    },
+    {
+      q: "Are my videos kept on your server?",
+      a: "Your video is uploaded for processing and the temporary files are removed afterwards. Please only edit videos you have the right to use.",
+    },
+    {
+      q: "How long can my video be?",
+      a: "The editor is built for short and medium-length clips such as social videos. Very long or very large files may be slow or rejected. GIF exports are limited to 30 seconds, and reversing works on clips of up to 60 seconds.",
+    },
   ],
 };
+
 
 function ImageSlot({ src, alt }) {
   if (src) {
