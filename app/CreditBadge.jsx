@@ -45,7 +45,7 @@ export default function CreditBadge({ className = '' }) {
       type="button"
       onClick={() => openCreditsPanel()}
       aria-label="আমার ক্রেডিট"
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black tabular-nums transition active:scale-95 ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black tabular-nums transition active:scale-95 ${
         low
           ? 'border-amber-500/60 bg-amber-500/10 text-amber-300'
           : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
