@@ -79,13 +79,13 @@ export default function SiteHeader() {
         .animate-badge-pop { animation: badgePop 0.25s ease-out; }
       `}</style>
 
-      <header className="border-b border-slate-900 bg-slate-900/40 backdrop-blur px-6 py-4 flex justify-between items-center relative z-40">
+      <header className="border-b border-slate-900 bg-[#070d1f] px-5 py-2.5 flex justify-between items-center relative z-40">
         <Link href="/" className="flex items-center gap-1 relative z-10" aria-label="BuffRadar home">
-          <span className="text-2xl font-black tracking-wider text-emerald-400">BUFF</span>
+          <span className="text-xl font-black tracking-wider text-emerald-400">BUFF</span>
           <img
             src="/buffradar-icon.png"
             alt="BuffRadar"
-            className={`w-9 h-9 object-contain -ml-1 ${isDownloading ? 'animate-radar-zap' : ''}`}
+            className={`w-8 h-8 object-contain -ml-1 ${isDownloading ? 'animate-radar-zap' : ''}`}
           />
         </Link>
 
@@ -127,7 +127,7 @@ export default function SiteHeader() {
                   onClick={() => setMenuOpen((o) => !o)}
                   aria-label="Menu"
                   aria-expanded={menuOpen}
-                  className="p-2 text-white hover:bg-slate-800 rounded-lg focus:outline-none transition"
+                  className="p-1.5 text-white hover:bg-slate-800 rounded-lg focus:outline-none transition"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
