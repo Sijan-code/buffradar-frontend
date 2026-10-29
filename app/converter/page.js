@@ -221,25 +221,6 @@ export default function ConverterPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col">
-      {/* 🌐 হেডার */}
-      <header className="border-b border-slate-900 bg-slate-900/40 backdrop-blur px-6 py-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.push('/')}
-          className="p-2 -ml-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          aria-label="Back"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div className="flex items-center gap-1">
-          <span className="text-lg font-black tracking-wider text-emerald-400">BUFF</span>
-          <img src="/buffradar-icon.png" alt="BuffRadar" className="w-7 h-7 object-contain -ml-1" />
-        </div>
-        <span className="text-slate-600 text-xs">/ Video Converter</span>
-      </header>
-
       <main className="max-w-xl w-full mx-auto px-4 py-8 flex-grow">
         <div className="text-center mb-8">
           <h1 className="text-2xl sm:text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
