@@ -299,23 +299,6 @@ export default function EditorPage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, '\\u003c') }}
         />
       )}
-      <header className="border-b border-slate-900 bg-slate-900/40 backdrop-blur px-6 py-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.push('/')}
-          className="p-2 -ml-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          aria-label="Back"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div className="flex items-center gap-1">
-          <span className="text-lg font-black tracking-wider text-emerald-400">BUFF</span>
-          <img src="/buffradar-icon.png" alt="BuffRadar" className="w-7 h-7 object-contain -ml-1" />
-        </div>
-        <span className="text-slate-600 text-xs">/ Video Editor</span>
-      </header>
 
       <main className="max-w-xl w-full mx-auto px-4 py-8 flex-grow">
         <div className="text-center mb-8">
