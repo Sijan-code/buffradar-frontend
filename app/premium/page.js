@@ -41,11 +41,6 @@ export default function PremiumPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white font-sans flex flex-col">
-      <header className="border-b border-slate-900 px-6 py-4">
-        <Link href="/" className="text-lg font-black tracking-wider text-emerald-400">
-          BUFF
-        </Link>
-      </header>
 
       <div className="flex-1 max-w-md w-full mx-auto px-5 py-10">
         <h1 className="text-2xl font-black mb-2">BuffRadar Premium</h1>
