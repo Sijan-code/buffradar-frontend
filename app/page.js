@@ -206,6 +206,14 @@ export default function DownloaderApp() {
   setIsClient(true);
   getAccessToken();
 }, []);
+    // ডাউনলোডের শতাংশ হেডারে (SiteHeader) পাঠানো
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('bf-download-progress', { detail: downloadProgress }));
+  }, [downloadProgress]);
+
+  useEffect(() => {
+    return () => window.dispatchEvent(new CustomEvent('bf-download-progress', { detail: null }));
+  }, []);
 
   const ensureFreshSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -722,141 +730,6 @@ export default function DownloaderApp() {
         animation-play-state: paused;
       }
     `}</style>
-
-    {/* 🌐 হেডার সেকশন */}
-    <header className="border-b border-slate-900 bg-slate-900/40 backdrop-blur px-6 py-4 flex justify-between items-center relative z-40">
-
-      {/* 🛰️ লোগো: BUFF + রাডার আইকন (রাডার লেখার বদলে ছবি) */}
-      <div className="flex items-center gap-1 relative z-10">
-        <span className="text-2xl font-black tracking-wider text-emerald-400">BUFF</span>
-        <img
-          src="/buffradar-icon.png"
-          alt="BuffRadar"
-          className={`w-9 h-9 object-contain -ml-1 ${isDownloading ? 'animate-radar-zap' : ''}`}
-        />
-      </div>
-
-      {/* ⚡ লোগো থেকে ডানদিকে ছুটে যাওয়া বিদ্যুতের রেখা — শুধু ডাউনলোডের সময় দেখা যাবে */}
-      {isDownloading && (
-        <svg
-          className="absolute left-20 right-20 top-1/2 -translate-y-1/2 h-9 w-[calc(100%-10rem)] pointer-events-none z-0"
-          viewBox="0 0 400 60"
-          preserveAspectRatio="none"
-        >
-          <polyline
-            points="0,30 55,8 85,42 135,12 175,46 225,10 265,38 315,14 400,30"
-            fill="none"
-            stroke="#facc15"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="lightning-bolt-path"
-          />
-          <polyline
-            points="0,30 55,8 85,42 135,12 175,46 225,10 265,38 315,14 400,30"
-            fill="none"
-            stroke="#fef9c3"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="lightning-bolt-core"
-          />
-        </svg>
-      )}
-
-      {/* ডানপাশের বাটনগুলোর জন্য একটি ফ্লেক্স কন্টেইনার */}
-      <div className="flex items-center gap-2 relative z-10">
-        {!isDownloading ? (
-          <>
-            <CreditBadge />
-
-            {/* 🍔 হ্যামবার্গার/থ্রি-ডট মেনু বাটন */}
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 text-white hover:bg-slate-800 rounded-lg focus:outline-none transition z-50"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-
-              {/* 📋 মেনু ড্রপডাউন বক্স */}
-                            {menuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-50">
-                  <button
-                    type="button"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      setMenuOpen(false);
-                      await fetchHistory();
-                    }}
-                    className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800 rounded-t-lg"
-                  >
-                    🕒 Download History
-                  </button>
-
-                  <hr className="border-t border-slate-800" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openCreditsPanel();
-                    }}
-                    className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800"
-                  >
-                    ⚡ আমার ক্রেডিট
-                  </button>
-
-                  <hr className="border-t border-slate-800" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openCreditsPanel();
-                    }}
-                    className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800"
-                  >
-                    🎁 বন্ধুকে আমন্ত্রণ করুন
-                  </button>
-
-                  <hr className="border-t border-slate-800" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      router.push('/premium');
-                    }}
-                    className="flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800 rounded-b-lg"
-                  >
-                    ⭐ Go Premium
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          /* ⚡ ডাউনলোড চলাকালীন Go Premium + থ্রি-ডট মেনু গায়েব হয়ে এই ব্যাজ দেখাবে */
-          <div className="flex items-center gap-2 bg-slate-900 border border-yellow-400/40 rounded-full pl-1.5 pr-3.5 py-1 shadow-lg shadow-yellow-400/10 animate-badge-pop">
-            <svg className="w-6 h-6 animate-zap-glow" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"
-                fill="#facc15"
-                stroke="#facc15"
-                strokeWidth="1"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="text-yellow-300 font-mono font-bold text-xs tabular-nums">
-              {downloadProgress}%
-            </span>
-          </div>
-        )}
-      </div>
-    </header>
 
     {/* 🚀 মেইন কন্টেন্ট সেকশন শুরু */}
     <main className="max-w-xl w-full mx-auto px-4 py-8 flex-grow">
