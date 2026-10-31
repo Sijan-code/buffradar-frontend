@@ -1677,10 +1677,6 @@ export default function DownloaderApp() {
 
       <ToolCards exclude={['downloader']} />
 
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
-        <p>&copy; 2026 buffradar.com</p>
-      </footer>
-
       {showHistoryModal && (
   <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4">
     <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl">
