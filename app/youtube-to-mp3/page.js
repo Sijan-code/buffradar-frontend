@@ -433,9 +433,6 @@ export default function YoutubeToMp3Page() {
       </main>
 
       <ToolCards exclude={['mp3']} />
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-[10px] text-slate-600">
-        <p>&copy; 2026 buffradar.com</p>
-      </footer>
     </div>
   );
 }
