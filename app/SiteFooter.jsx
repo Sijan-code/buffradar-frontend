@@ -30,7 +30,10 @@ export default function SiteFooter() {
   return (
     <footer className="border-t border-slate-900 bg-[#070d1f] px-6 pt-8 pb-6">
       <div className="max-w-2xl mx-auto">
-        <p className="text-lg font-black tracking-wider text-emerald-400 mb-1">BUFF</p>
+        <p className="text-lg font-black tracking-wide mb-1">
+          <span className="text-emerald-400">BUFF</span>
+          <span className="text-white">RADAR</span>
+        </p>
         <p className="text-xs text-slate-500 mb-6">Download, convert and edit videos online.</p>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
