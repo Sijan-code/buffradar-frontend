@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import SiteHeader from "./SiteHeader";
+import SiteFooter from "./SiteFooter";
 import { Analytics } from "@vercel/analytics/next"; 
 import LimitModal from "./LimitModal";
 import "./globals.css";
@@ -77,6 +78,7 @@ export default function RootLayout({ children }) {
         <div className="min-h-full flex flex-col">
           <SiteHeader />
           {children}
+          <SiteFooter />
           <LimitModal />
         </div>
         <Analytics /> 
