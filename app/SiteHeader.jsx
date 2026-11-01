@@ -8,7 +8,8 @@ import HistoryModal from './HistoryModal';
 import { openCreditsPanel } from './creditsPanel';
 
 // সব পেজের একই হেডার: BUFFRADAR লেখা + ক্রেডিট-ব্যাজ + মেনু। app/layout.js-এ একবার বসে।
-// পূর্ণ-পর্দার এডিটর পেজে (নিজস্ব টপ-বার আছে) লুকিয়ে থাকে। ডাউনলোডের সময় কিছু বদলায় না।
+// পূর্ণ-পর্দার এডিটর পেজে (নিজস্ব টপ-বার আছে) লুকিয়ে থাকে।
+// ডাউনলোড চলাকালীন হোম পেজ 'bf-download-progress' ঘটনায় শতাংশ পাঠায়; তখন ব্যাজ+মেনুর জায়গায় সবুজ % পিল আর হেডারের নিচে সবুজ অগ্রগতি-রেখা দেখায়।
 const HIDE_ON = ['/editor/manual', '/editor/text-to-edit'];
 
 export default function SiteHeader() {
@@ -16,11 +17,18 @@ export default function SiteHeader() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [progress, setProgress] = useState(null);
   const menuRef = useRef(null);
 
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const onProgress = (e) => setProgress(typeof e.detail === 'number' ? e.detail : null);
+    window.addEventListener('bf-download-progress', onProgress);
+    return () => window.removeEventListener('bf-download-progress', onProgress);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -37,6 +45,7 @@ export default function SiteHeader() {
 
   if (HIDE_ON.some((p) => pathname.startsWith(p))) return null;
 
+  const isDownloading = progress !== null;
   const item = 'flex w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-slate-800';
 
   return (
@@ -48,6 +57,13 @@ export default function SiteHeader() {
         </Link>
 
         <div className="flex items-center gap-2">
+          {isDownloading ? (
+            <div className="flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-black tabular-nums text-emerald-300">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+              {progress}%
+            </div>
+          ) : (
+            <>
           <CreditBadge />
 
           <div className="relative" ref={menuRef}>
@@ -111,7 +127,16 @@ export default function SiteHeader() {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
+
+        {isDownloading && (
+          <div
+            className="absolute bottom-0 left-0 h-0.5 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] transition-all duration-200"
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          />
+        )}
       </header>
 
       {historyOpen && <HistoryModal onClose={() => setHistoryOpen(false)} />}
