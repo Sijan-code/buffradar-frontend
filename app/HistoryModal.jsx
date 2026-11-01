@@ -55,19 +55,19 @@ export default function HistoryModal({ onClose }) {
 
   const deleteItem = async (item) => {
     if (!item || item.id === undefined || item.id === null) return;
-    if (!window.confirm('এই হিস্ট্রি আইটেমটা কি স্থায়ীভাবে মুছে ফেলতে চান? এটা আর ফেরত আনা যাবে না।')) return;
+    if (!window.confirm('Delete this history item permanently? This can’t be undone.')) return;
     setDeletingId(item.id);
     try {
       const { error } = await runQuery(() => supabase.from('download_history').delete().eq('id', item.id));
       if (error) {
         console.error('Delete error:', error.message);
-        alert('মুছে ফেলা যায়নি। আবার চেষ্টা করুন।');
+        alert('Couldn’t delete. Please try again.');
         return;
       }
       setHistoryData((prev) => prev.filter((h) => h.id !== item.id));
     } catch (err) {
       console.error('Delete try-catch error:', err);
-      alert('মুছে ফেলা যায়নি। ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।');
+      alert('Couldn’t delete. Check your internet connection and try again.');
     } finally {
       setDeletingId(null);
     }
@@ -75,20 +75,20 @@ export default function HistoryModal({ onClose }) {
 
   const clearAll = async () => {
     if (historyData.length === 0) return;
-    if (!window.confirm(`সব (${historyData.length}টা) হিস্ট্রি আইটেম কি স্থায়ীভাবে মুছে ফেলতে চান?`)) return;
+    if (!window.confirm(`Delete all ${historyData.length} history items permanently?`)) return;
     setClearing(true);
     try {
       const ids = historyData.map((h) => h.id).filter((id) => id !== undefined && id !== null);
       const { error } = await runQuery(() => supabase.from('download_history').delete().in('id', ids));
       if (error) {
         console.error('Clear all error:', error.message);
-        alert('সব মুছে ফেলা যায়নি। আবার চেষ্টা করুন।');
+        alert('Couldn’t clear history. Please try again.');
         return;
       }
       setHistoryData([]);
     } catch (err) {
       console.error('Clear all try-catch error:', err);
-      alert('সব মুছে ফেলা যায়নি। ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।');
+      alert('Couldn’t clear history. Check your internet connection and try again.');
     } finally {
       setClearing(false);
     }
@@ -109,7 +109,7 @@ export default function HistoryModal({ onClose }) {
                 disabled={clearing}
                 className="text-[11px] font-bold text-red-400 hover:text-red-300 disabled:opacity-40 transition"
               >
-                {clearing ? 'মুছছে...' : 'সব মুছুন'}
+                {clearing ? 'Clearing...' : 'Clear all'}
               </button>
             )}
             <button onClick={onClose} className="text-gray-400 hover:text-white text-xl font-bold p-1 transition" aria-label="Close">
@@ -120,7 +120,7 @@ export default function HistoryModal({ onClose }) {
 
         <div className="p-4 overflow-y-auto flex-1 space-y-3">
           {historyData.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">কোনো ডাউনলোডের হিস্ট্রি পাওয়া যায়নি।</p>
+            <p className="text-center text-gray-500 py-8">No download history yet.</p>
           ) : (
             historyData.map((item) => (
               <div key={item.id} className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl mb-2 flex items-start gap-2">
