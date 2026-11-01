@@ -11,21 +11,21 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 const ADS_TEST = process.env.NEXT_PUBLIC_ADS_TEST === '1';
 
 const KIND_LABEL = {
-  download: 'ডাউনলোডে',
-  convert: 'কনভার্টে',
-  edit_manual: 'ম্যানুয়াল এডিটে',
-  edit_ai: 'AI এডিটে (Text to edit)',
+  download: 'Downloading',
+  convert: 'Converting',
+  edit_manual: 'Manual editing',
+  edit_ai: 'AI editing (Text to edit)',
 };
 
-const KIND_NAME = { download: 'ডাউনলোড', convert: 'কনভার্ট', edit_manual: 'ম্যানুয়াল এডিট', edit_ai: 'AI এডিট' };
+const KIND_NAME = { download: 'Download', convert: 'Convert', edit_manual: 'Manual edit', edit_ai: 'AI edit' };
 
-const bn = (n) => String(n ?? '').replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[d]);
+const bn = (n) => String(n ?? '').replace(/\d/g, (d) => d);
 
 function formatReset(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('bn-BD', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleString('en-US', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
 export default function LimitModal() {
@@ -103,11 +103,11 @@ export default function LimitModal() {
       try {
         const c = await fetch(`${API_BASE}/api/ads/complete`, { method: 'POST', headers, body: JSON.stringify({ nonce }) });
         const cj = await c.json().catch(() => ({}));
-        if (!c.ok) throw new Error(cj.detail || 'ক্রেডিট যোগ করা যায়নি।');
-        setDone(`+${bn(cj.credits)} ক্রেডিট পেয়েছেন! এখন আপনার ${bn(cj.balance)} ক্রেডিট আছে। কাজটা আবার চেষ্টা করুন।`);
+        if (!c.ok) throw new Error(cj.detail || 'Credits couldn’t be added.');
+        setDone(`+${bn(cj.credits)} credits added! You now have ${bn(cj.balance)}. Please try your task again.`);
         setView('done');
       } catch (e) {
-        setErr(e.message || 'বিজ্ঞাপন চালানো যায়নি।');
+        setErr(e.message || 'Couldn’t play the ad.');
         setView('main');
       }
       adRef.current = null;
@@ -141,7 +141,7 @@ export default function LimitModal() {
         if (!r.ok) return;
         if (j.status === 'rewarded') {
           localStorage.removeItem('bf_ref');
-          setToast(`রেফারেল পুরস্কার: +${bn(j.credits)} ক্রেডিট পেয়েছেন!`);
+          setToast(`Referral reward: +${bn(j.credits)} credits!`);
           setTimeout(() => setToast(''), 6000);
         } else if (['invalid', 'self', 'already'].includes(j.status)) {
           localStorage.removeItem('bf_ref');
@@ -166,7 +166,7 @@ export default function LimitModal() {
   // বিজ্ঞাপন সত্যিই দেখা না গেলে (ব্লকার, নেটওয়ার্ক থেকে বিজ্ঞাপন না আসা) ক্রেডিট দেওয়া হয় না
   const adFailed = () => {
     adRef.current = null;
-    setErr('বিজ্ঞাপন লোড হয়নি। বিজ্ঞাপন-ব্লকার বন্ধ করে বা অন্য ব্রাউজারে আবার চেষ্টা করুন।');
+    setErr('The ad didn’t load. Turn off your ad blocker or try another browser.');
     setView('main');
   };
 
@@ -180,9 +180,9 @@ export default function LimitModal() {
         const r = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
         error = r.error;
       }
-      if (error) setErr('Google সাইন-আপ এখনো চালু হয়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
+      if (error) setErr('Google sign-in isn’t available yet. Please try again later.');
     } catch (_) {
-      setErr('সাইন-আপ শুরু করা যায়নি। আবার চেষ্টা করুন।');
+      setErr('Couldn’t start sign-in. Please try again.');
     }
     setBusy(false);
   };
@@ -195,13 +195,13 @@ export default function LimitModal() {
       const headers = await authHeaders({ 'Content-Type': 'application/json' });
       const s = await fetch(`${API_BASE}/api/ads/start`, { method: 'POST', headers });
       const sj = await s.json().catch(() => ({}));
-      if (!s.ok) throw new Error(sj.detail || 'এখন বিজ্ঞাপন পাওয়া যাচ্ছে না।');
+      if (!s.ok) throw new Error(sj.detail || 'No ad is available right now.');
       adRef.current = { nonce: sj.nonce, headers, finishing: false };
       setAdLoaded(false);
       setSecs((sj.min_seconds || 15) + 1);
       setView('ad');
     } catch (e) {
-      setErr(e.message || 'বিজ্ঞাপন চালানো যায়নি।');
+      setErr(e.message || 'Couldn’t play the ad.');
     }
     setAdBusy(false);
   };
@@ -214,20 +214,20 @@ export default function LimitModal() {
     try {
       const r = await fetch(`${API_BASE}/api/referral/me`, { headers: await authHeaders() });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.detail || 'এখন আমন্ত্রণ-লিংক বানানো যাচ্ছে না।');
+      if (!r.ok) throw new Error(j.detail || 'Couldn’t create your invite link right now.');
       setRefInfo(j);
       const link = `${window.location.origin}/?ref=${j.code}`;
-      const text = `BuffRadar-এ ফ্রি ভিডিও ডাউনলোড, কনভার্ট ও এডিট করুন। আমার লিংক দিয়ে যোগ দিলে দু'জনেই +${bn(j.credits)} ক্রেডিট পাব: ${link}`;
+      const text = `Download, convert and edit videos for free on BuffRadar. Join with my link and we both get +${bn(j.credits)} credits: ${link}`;
       if (navigator.share) {
         try {
           await navigator.share({ text });
         } catch (_) {}
       } else {
         await navigator.clipboard.writeText(text);
-        setNote('আমন্ত্রণের লেখা কপি হয়েছে, বন্ধুকে পাঠিয়ে দিন।');
+        setNote('Invite message copied. Send it to a friend.');
       }
     } catch (e) {
-      setErr(e.message || 'আমন্ত্রণ পাঠানো যায়নি।');
+      setErr(e.message || 'Couldn’t send the invite.');
     }
     setRefBusy(false);
   };
@@ -253,34 +253,34 @@ export default function LimitModal() {
           >
             {view === 'done' && (
               <>
-                <h2 className="text-lg font-black mb-3 text-emerald-400">ক্রেডিট যোগ হয়েছে</h2>
+                <h2 className="text-lg font-black mb-3 text-emerald-400">Credits added</h2>
                 <p className="text-sm text-slate-300 leading-relaxed mb-5">{done}</p>
                 <button
                   type="button"
                   onClick={close}
                   className="w-full rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 text-sm transition active:scale-[0.98]"
                 >
-                  ঠিক আছে
+                  OK
                 </button>
               </>
             )}
 
             {view === 'ad' && (
               <>
-                <h2 className="text-lg font-black mb-1">বিজ্ঞাপন চলছে</h2>
-                <p className="text-[11px] text-slate-500 mb-4">বিজ্ঞাপনে ক্লিক করতে হবে না। অপেক্ষা শেষ হলে ক্রেডিট যোগ হবে।</p>
+                <h2 className="text-lg font-black mb-1">Ad in progress</h2>
+                <p className="text-[11px] text-slate-500 mb-4">You don’t need to click the ad. Credits are added when the timer ends.</p>
                 {AD_FRAME_URL ? (
                   <AdBox src={AD_FRAME_URL} onLoaded={() => setAdLoaded(true)} onFailed={adFailed} />
                 ) : (
                   <div className="mx-auto flex h-[250px] w-[300px] items-center justify-center rounded-xl border border-dashed border-slate-700 text-xs text-slate-500">
-                    বিজ্ঞাপন (টেস্ট)
+                    Ad (test)
                   </div>
                 )}
                 <p className="mt-4 text-center text-sm font-bold text-emerald-300">
-                  {adLoaded || ADS_TEST ? `${bn(secs)} সেকেন্ড অপেক্ষা করুন...` : 'বিজ্ঞাপন লোড হচ্ছে...'}
+                  {adLoaded || ADS_TEST ? `Please wait ${bn(secs)} seconds...` : 'Loading ad...'}
                 </p>
                 <p className="mt-1 text-center text-[11px] text-slate-500">
-                  বিজ্ঞাপন না এলে বিজ্ঞাপন-ব্লকার বন্ধ করে আবার চেষ্টা করুন।
+                  If no ad appears, turn off your ad blocker and try again.
                 </p>
                 <button
                   type="button"
@@ -290,18 +290,18 @@ export default function LimitModal() {
                   }}
                   className="mt-4 w-full rounded-full border border-slate-700 text-slate-300 hover:border-slate-500 py-2.5 text-xs font-bold transition"
                 >
-                  বাতিল
+                  Cancel
                 </button>
               </>
             )}
 
             {view === 'main' && (
               <>
-                <h2 className="text-lg font-black mb-1">{info.mode === 'badge' ? 'আপনার ক্রেডিট' : guest ? 'আপনার ফ্রি ক্রেডিট শেষ' : 'আপনার ক্রেডিট শেষ'}</h2>
+                <h2 className="text-lg font-black mb-1">{info.mode === 'badge' ? 'Your credits' : guest ? 'You’ve used your free credits' : 'You’re out of credits'}</h2>
                 <p className="text-[11px] text-slate-500 mb-4">
                   {info.mode === 'badge'
-                    ? `আপনার আছে ${bn(info.balance)}/${bn(info.budget)} ক্রেডিট (২৪ ঘণ্টায়)।`
-                    : `${KIND_LABEL[info.kind] || 'এই কাজে'} ${bn(info.cost)} ক্রেডিট লাগে। আপনার আছে ${bn(info.balance)}/${bn(info.budget)}।`}
+                    ? `You have ${bn(info.balance)}/${bn(info.budget)} credits (per 24 hours).`
+                    : `${KIND_LABEL[info.kind] || 'This action'} costs ${bn(info.cost)} ${Number(info.cost) === 1 ? 'credit' : 'credits'}. You have ${bn(info.balance)}/${bn(info.budget)}.`}
                 </p>
 
                 {info.mode === 'badge' && costs && (
@@ -318,19 +318,19 @@ export default function LimitModal() {
                 <p className="text-sm text-slate-300 leading-relaxed mb-4">
                   {guest
                     ? info.network
-                      ? 'এই ইন্টারনেট সংযোগ থেকে অনেক ব্যবহার হয়েছে। Google দিয়ে সাইন-আপ করলে আপনার নিজের ক্রেডিট পাবেন।'
-                      : `Google দিয়ে সাইন-আপ করে ৩ গুণ ক্রেডিট (${bn((info.budget || 8) * 3)}) পান।`
+                      ? 'This connection has been used a lot. Sign in with Google to get your own credits.'
+                      : `Sign in with Google to get 3x the credits (${bn((info.budget || 8) * 3)}).`
                     : info.mode === 'badge'
-                    ? 'ক্রেডিট কমলে বিজ্ঞাপন দেখে, বন্ধুকে আমন্ত্রণ করে বা Premium নিয়ে বাড়াতে পারেন।'
-                    : 'কাজ চালিয়ে যেতে বিজ্ঞাপন দেখে ক্রেডিট নিন, বন্ধুকে আমন্ত্রণ করুন, অথবা Premium নিন।'}
-                  {reset && <span className="block text-xs text-slate-500 mt-2">কিছু ক্রেডিট ফিরবে: {reset}</span>}
+                    ? 'When you run low, you can earn more by watching an ad, inviting a friend, or going Premium.'
+                    : 'To keep going, watch an ad for credits, invite a friend, or go Premium.'}
+                  {reset && <span className="block text-xs text-slate-500 mt-2">Some credits return: {reset}</span>}
                 </p>
 
                 {err && <p className="text-xs text-red-400 mb-3">{err}</p>}
                 {note && <p className="text-xs text-emerald-300 mb-3">{note}</p>}
                 {refInfo && !guest && (
                   <p className="text-[11px] text-slate-500 mb-3">
-                    আপনি {bn(refInfo.invited)} জনকে আমন্ত্রণ করেছেন, {bn(refInfo.rewarded)} জন যোগ দিয়েছেন।
+                    Invited: {bn(refInfo.invited)} · Joined: {bn(refInfo.rewarded)}
                   </p>
                 )}
 
@@ -342,7 +342,7 @@ export default function LimitModal() {
                       disabled={busy}
                       className="w-full rounded-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 font-black py-3 text-sm transition active:scale-[0.98]"
                     >
-                      {busy ? 'অপেক্ষা করুন...' : 'Google দিয়ে সাইন-আপ করুন'}
+                      {busy ? 'Please wait...' : 'Sign in with Google'}
                     </button>
                   ) : (
                     <>
@@ -353,10 +353,10 @@ export default function LimitModal() {
                         className="w-full rounded-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-black py-3 text-sm transition active:scale-[0.98]"
                       >
                         {adBusy
-                          ? 'অপেক্ষা করুন...'
+                          ? 'Please wait...'
                           : adsReady
-                          ? `বিজ্ঞাপন দেখে +${bn(adCredits)} ক্রেডিট নিন`
-                          : 'বিজ্ঞাপন (শীঘ্রই আসছে)'}
+                          ? `Watch an ad for +${bn(adCredits)} credits`
+                          : 'Watch an ad (coming soon)'}
                       </button>
                       <button
                         type="button"
@@ -364,7 +364,7 @@ export default function LimitModal() {
                         disabled={refBusy}
                         className="w-full rounded-full border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-60 font-black py-3 text-sm transition active:scale-[0.98]"
                       >
-                        {refBusy ? 'অপেক্ষা করুন...' : `বন্ধুকে আমন্ত্রণ করুন (দু'জনেই +${bn(refCredits)})`}
+                        {refBusy ? 'Please wait...' : `Invite a friend (you both get +${bn(refCredits)})`}
                       </button>
                       <button
                         type="button"
@@ -382,7 +382,7 @@ export default function LimitModal() {
                     onClick={close}
                     className="w-full rounded-full border border-slate-700 text-slate-300 hover:border-slate-500 py-2.5 text-xs font-bold transition"
                   >
-                    পরে
+                    Not now
                   </button>
                 </div>
               </>
