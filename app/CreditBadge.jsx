@@ -5,7 +5,7 @@ import { authHeaders } from './supabaseClient';
 import { openCreditsPanel } from './creditsPanel';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-const bn = (n) => String(n ?? '').replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[d]);
+const bn = (n) => String(n ?? '').replace(/\d/g, (d) => d);
 
 // হেডারে বসানোর ক্রেডিট-ব্যাজ: <CreditBadge />  (যেমন ⚡ ৮/৮)
 // ট্যাপ করলে "আমার ক্রেডিট" প্যানেল খোলে। প্রতি ২০ সেকেন্ডে, ট্যাবে ফিরলে, বা 'bf-usage-refresh' ঘটনায় হালনাগাদ হয়।
@@ -44,7 +44,7 @@ export default function CreditBadge({ className = '' }) {
     <button
       type="button"
       onClick={() => openCreditsPanel()}
-      aria-label="আমার ক্রেডিট"
+      aria-label="My credits"
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black tabular-nums transition active:scale-95 ${
         low
           ? 'border-amber-500/60 bg-amber-500/10 text-amber-300'
