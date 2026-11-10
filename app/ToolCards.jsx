@@ -43,6 +43,20 @@ const TOOLS = [
     ),
   },
   {
+    key: 'meme',
+    href: '/meme-maker',
+    title: 'Meme Maker',
+    desc: 'Add captions to any photo',
+    tile: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
+    hover: 'hover:border-amber-500/50',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.5 14.5c1 1.4 2.2 2 3.5 2s2.5-.6 3.5-2M9 9.5h.01M15 9.5h.01" />
+      </>
+    ),
+  },
+  {
     key: 'editor',
     href: '/editor',
     title: 'AI Video Editor',
