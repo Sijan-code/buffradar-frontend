@@ -15,9 +15,10 @@ const KIND_LABEL = {
   convert: 'Converting',
   edit_manual: 'Manual editing',
   edit_ai: 'AI editing (Text to edit)',
+  meme_ai: 'Meme caption ideas',
 };
 
-const KIND_NAME = { download: 'Download', convert: 'Convert', edit_manual: 'Manual edit', edit_ai: 'AI edit' };
+const KIND_NAME = { download: 'Download', convert: 'Convert', edit_manual: 'Manual edit', edit_ai: 'AI edit', meme_ai: 'Meme captions' };
 
 const bn = (n) => String(n ?? '').replace(/\d/g, (d) => d);
 
