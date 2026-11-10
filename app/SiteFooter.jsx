@@ -12,6 +12,7 @@ const TOOLS = [
   { href: '/', label: 'Video Downloader' },
   { href: '/converter', label: 'Video Converter' },
   { href: '/youtube-to-mp3', label: 'YouTube to MP3' },
+  { href: '/meme-maker', label: 'Meme Maker' },
   { href: '/editor', label: 'AI Video Editor' },
 ];
 
