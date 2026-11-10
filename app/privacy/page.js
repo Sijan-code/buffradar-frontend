@@ -49,6 +49,10 @@ export default function PrivacyPage() {
         (Groq) to turn it into editing settings. Your video itself is not sent to the AI provider. Please do not enter
         personal or confidential information in your prompts.
       </P>
+      <P>
+        The same applies to “Suggest captions” in the Meme Maker: only the idea text you type is sent to the AI provider.
+        Pictures you use in the Meme Maker are processed in your browser and are not uploaded to our servers.
+      </P>
 
       <H2>Service providers</H2>
       <P>
