@@ -13,7 +13,18 @@ const TOOLS = [
   { href: '/converter', label: 'Video Converter' },
   { href: '/youtube-to-mp3', label: 'YouTube to MP3' },
   { href: '/meme-maker', label: 'Meme Maker' },
+  { href: '/image-converter', label: 'Image Converter' },
+  { href: '/qr-code-generator', label: 'QR Code Generator' },
   { href: '/editor', label: 'AI Video Editor' },
+];
+
+const POPULAR = [
+  { href: '/heic-to-jpg', label: 'HEIC to JPG' },
+  { href: '/png-to-jpg', label: 'PNG to JPG' },
+  { href: '/compress-image', label: 'Compress Image' },
+  { href: '/compress-image-to-100kb', label: 'Compress to 100 KB' },
+  { href: '/wifi-qr-code-generator', label: 'Wi-Fi QR Code' },
+  { href: '/whatsapp-qr-code-generator', label: 'WhatsApp QR Code' },
 ];
 
 export default function SiteFooter() {
@@ -55,6 +66,17 @@ export default function SiteFooter() {
             ))}
           </nav>
         </div>
+
+        <nav aria-label="Popular tools" className="mb-6">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-2">Popular</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {POPULAR.map((t) => (
+              <Link key={t.href} href={t.href} className="py-1 text-xs text-slate-400 hover:text-emerald-400 transition-colors">
+                {t.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
 
         <p className="text-[11px] text-slate-500 leading-relaxed border-t border-slate-900 pt-4 mb-3">
           {SITE.name} is an independent tool and is not affiliated with, endorsed by or sponsored by YouTube, Facebook,
