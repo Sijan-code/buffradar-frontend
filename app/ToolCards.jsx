@@ -57,6 +57,37 @@ const TOOLS = [
     ),
   },
   {
+    key: 'image',
+    href: '/image-converter',
+    title: 'Image Converter',
+    desc: 'HEIC, PNG, JPG & compress',
+    tile: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400',
+    hover: 'hover:border-cyan-500/50',
+    icon: (
+      <>
+        <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth="2" />
+        <circle cx="9" cy="10" r="1.6" strokeWidth="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 16-5-5-8 9" />
+      </>
+    ),
+  },
+  {
+    key: 'qr',
+    href: '/qr-code-generator',
+    title: 'QR Code Generator',
+    desc: 'Links, Wi-Fi, WhatsApp',
+    tile: 'bg-lime-500/10 border-lime-500/30 text-lime-400',
+    hover: 'hover:border-lime-500/50',
+    icon: (
+      <>
+        <rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="2" />
+        <rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="2" />
+        <rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="2" />
+        <path strokeLinecap="round" strokeWidth="2" d="M14 14h3v3h-3zM20 14v.01M14 20h.01M20 20v.01M17 20h.01" />
+      </>
+    ),
+  },
+  {
     key: 'editor',
     href: '/editor',
     title: 'AI Video Editor',
