@@ -51,7 +51,7 @@ export default function PrivacyPage() {
       </P>
       <P>
         The same applies to “Suggest captions” in the Meme Maker: only the idea text you type is sent to the AI provider.
-        Pictures you use in the Meme Maker are processed in your browser and are not uploaded to our servers.
+        Pictures you use in the Meme Maker, images you convert or compress with the Image Converter, and the details you type into the QR Code Generator are processed in your browser and are not sent to our servers.
       </P>
 
       <H2>Service providers</H2>
