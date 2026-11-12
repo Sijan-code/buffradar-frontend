@@ -35,6 +35,7 @@ export default function TermsPage() {
           'Do not try to overload, attack or reverse-engineer the service, or to get around credit limits (for example with automated tools or fake accounts).',
           'Do not upload content you are not allowed to use, or content that is unlawful or harmful.',
           'Content protected by DRM and private or login-only content cannot be downloaded.',
+          'Do not use the QR Code Generator to create codes that lead to scams, malware or unlawful content.',
         ]}
       />
 
